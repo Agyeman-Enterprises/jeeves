@@ -1,0 +1,93 @@
+JEEVES — GATE 7: PRODUCT-SPECIFIC BEHAVIORAL TEST
+=====================================================
+Jeeves is Akua's autonomous life manager — a single FastAPI service
+that tracks goals, learns behavior patterns, detects contradictions,
+generates briefings, and manages interventions.
+
+This file is read by RELEASE_GATE.txt Gate 7.
+Every check below must PASS before Jeeves can be called done.
+
+===================================================================
+SECTION A: HEALTH + API ENDPOINTS
+===================================================================
+
+  [x] /health → GET returns status=alive, services (aqui/nexus/ghexit), brain stats
+  [x] /review/goals → GET returns 14 seed goals ranked by effective_weight
+  [x] /review/contradictions → GET returns detected contradictions with severity
+  [x] /review/retirement → GET returns days_left, monthly_needed
+  [x] /review/what-matters-now → GET returns top 5 priorities
+  [x] /review/mimograph → GET returns nodes (17) and edges (11)
+  [x] /chat → POST accepts message, returns memory-grounded response
+  [x] /ingest → POST accepts normalized events from any source
+  [x] /ingest/observe → POST records behavior and updates goal weights
+  [x] /schedule/briefing → GET generates morning briefing via LLM
+  [x] /review/events → GET returns recent events
+
+===================================================================
+SECTION B: WEIGHTING ENGINE (CORE RANKING)
+===================================================================
+
+  [x] Seed goals loaded with correct stated_weight values
+  [x] record_evidence() updates revealed_weight via EMA
+  [x] record_evidence() increments action_count or skip_count
+  [x] Effective weight computed from stated + revealed + persistence + recency
+  [x] Contradiction score amplified for core goals (stated >= 0.8)
+  [x] run_nightly_update() applies decay to all goals
+  [x] Retirement countdown returns correct days remaining
+
+===================================================================
+SECTION C: MIMOGRAPH (BELIEF GRAPH)
+===================================================================
+
+  [x] Seed nodes created (traits, behaviors, avoidances, rewards, blockers, projects)
+  [x] Seed edges created (supports, contradicts, blocks, drains, energizes)
+  [x] what_blocks(goal_id) returns blocking nodes
+  [x] get_contradictions_for(goal_id) returns contradicting behaviors
+  [x] update_node() adjusts strength and confidence from evidence
+
+===================================================================
+SECTION D: CONTEXT ASSEMBLER + LLM
+===================================================================
+
+  [ ] /chat → context assembly includes identity, goals, contradictions, events, Aqui memory
+  [ ] /chat → LLM primary path (LiteLLM/Ollama) returns real response
+  [ ] /chat → LLM fallback (Anthropic) returns real response when primary is down
+  [ ] /schedule/briefing → returns LLM-generated morning briefing with retirement countdown
+
+===================================================================
+SECTION E: DAILY CYCLES (SCHEDULER)
+===================================================================
+
+  [x] APScheduler starts with 3 jobs (morning, nightly, repo_audit)
+  [ ] Morning cycle pulls Aqui data, generates briefing, sends via AlrtMe
+  [ ] Nightly reconciliation runs weight update, generates reflections
+  [ ] Repo audit triggers Nexus GitHub sync
+
+===================================================================
+SECTION F: THE MANDATORY PERSISTENCE TEST
+===================================================================
+
+  [x] POST /ingest/observe with related_goal → goal weight updated in Supabase
+  [x] GET /review/goals after observation → reflects updated weight
+  [ ] Restart server → goal weights still reflect previous observations
+  [ ] Multiple observations over time → effective_weight converges toward behavior
+  [ ] Contradiction score increases when stated high but behavior low
+
+===================================================================
+SECTION G: DEPLOYMENT
+===================================================================
+
+  [ ] Docker image builds successfully
+  [ ] Container starts and /health returns 200
+  [ ] Deploy to Coolify on Hetzner
+  [ ] External access at jeeves.agyemanenterprises.com
+
+===================================================================
+WHAT CLAUDE IS NOT ALLOWED TO SUBSTITUTE FOR THIS TEST
+===================================================================
+
+  - "tsc passed" → NOT A PRODUCT TEST
+  - "build succeeded" → NOT A PRODUCT TEST
+  - "component renders" → NOT A PRODUCT TEST
+  - "API returns 200" alone → NOT A PRODUCT TEST
+  - Only the full end-to-end flow above counts as PASS.
