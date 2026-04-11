@@ -88,3 +88,95 @@ class AlrtMeClient:
     async def send_checkin(self, question: str) -> bool:
         """Send a check-in question — push only."""
         return await self.send("Jeeves Check-in", question, priority="normal", topic="checkin")
+
+    async def send_gate_request(
+        self,
+        app_name: str,
+        results: str,
+        actions: Optional[List[Dict]] = None,
+        verdict: str = "FAIL",
+        summary: str = "",
+        priority: str = "high",
+    ) -> Optional[str]:
+        """
+        Send an actionable gate request via AlrtMe.
+        Returns the gate token if successful, None if failed.
+
+        The push notification will have Approve/Reject buttons.
+        When Akua taps one, AlrtMe posts to the callback_url.
+
+        Args:
+            app_name: Which app/service is asking (e.g., ContentForge, claude-code)
+            results: What happened / what needs review
+            actions: Custom action buttons with callback_urls
+            verdict: PASS or FAIL
+            summary: Short summary for the notification
+            priority: Notification priority
+        """
+        if not self.api_key:
+            LOGGER.warning("AlrtMe API key not set — gate request not sent")
+            return None
+
+        jeeves_base = "https://jeeves.agyemanenterprises.com"
+
+        # Default actions: approve/reject posting back to Jeeves
+        if not actions:
+            actions = [
+                {
+                    "action": "approve",
+                    "title": "Approve",
+                    "callback_url": f"{jeeves_base}/webhooks/gate-response",
+                    "style": "primary",
+                },
+                {
+                    "action": "reject",
+                    "title": "Reject",
+                    "callback_url": f"{jeeves_base}/webhooks/gate-response",
+                    "style": "danger",
+                },
+            ]
+
+        try:
+            payload = {
+                "api_key": self.api_key,
+                "app_name": app_name,
+                "verdict": verdict,
+                "results": results,
+                "actions": actions,
+                "summary": summary or results[:100],
+                "priority": priority,
+            }
+
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.post(
+                    f"{self.base_url}/api/gate-request",
+                    json=payload,
+                )
+                if resp.status_code < 400:
+                    data = resp.json()
+                    token = data.get("token")
+                    LOGGER.info("AlrtMe gate request sent: %s (app=%s)", token[:8] if token else "?", app_name)
+                    return token
+                LOGGER.warning("AlrtMe gate-request returned %d: %s", resp.status_code, resp.text[:200])
+                return None
+        except Exception as exc:
+            LOGGER.warning("AlrtMe gate-request failed: %s", exc)
+            return None
+
+    async def poll_gate_response(self, token: str) -> Optional[str]:
+        """
+        Poll AlrtMe for Akua's response to a gate request.
+        Returns: 'approve', 'reject', None (still waiting), or 'expired'.
+        """
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get(f"{self.base_url}/api/respond/{token}")
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("expired"):
+                        return "expired"
+                    return data.get("response")  # None if still waiting
+                return None
+        except Exception as exc:
+            LOGGER.warning("AlrtMe poll failed: %s", exc)
+            return None

@@ -29,6 +29,7 @@ from app.api.chat import router as chat_router
 from app.api.ingest import router as ingest_router
 from app.api.review import router as review_router
 from app.api.schedule import router as schedule_router
+from app.api.webhooks import router as webhooks_router
 from app.config import get_settings
 from app.core.orchestrator import get_orchestrator
 
@@ -93,7 +94,7 @@ app = FastAPI(
 
 # ── Auth middleware ────────────────────────────────────────────────────
 EXEMPT_PATHS = {"/health", "/docs", "/openapi.json", "/redoc"}
-EXEMPT_PREFIXES = ("/app",)  # PWA is public
+EXEMPT_PREFIXES = ("/app", "/webhooks")  # PWA + inbound webhooks are public
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
@@ -137,6 +138,7 @@ app.include_router(chat_router)
 app.include_router(ingest_router)
 app.include_router(review_router)
 app.include_router(schedule_router)
+app.include_router(webhooks_router)
 
 
 @app.get("/health")
