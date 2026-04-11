@@ -15,8 +15,12 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -89,11 +93,14 @@ app = FastAPI(
 
 # ── Auth middleware ────────────────────────────────────────────────────
 EXEMPT_PATHS = {"/health", "/docs", "/openapi.json", "/redoc"}
+EXEMPT_PREFIXES = ("/app",)  # PWA is public
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if request.url.path in EXEMPT_PATHS:
+            return await call_next(request)
+        if any(request.url.path.startswith(p) for p in EXEMPT_PREFIXES):
             return await call_next(request)
         api_key = get_settings().api_key
         if not api_key:
@@ -158,3 +165,17 @@ async def trigger_repo_audit():
     """Manually trigger repo audit."""
     from app.jobs.repo_audit_cycle import run_repo_audit
     return await run_repo_audit()
+
+
+# ── PWA (phone interface) ─────────────────────────────────────────────
+_STATIC_DIR = Path(__file__).parent / "static"
+
+
+@app.get("/app")
+async def pwa_index():
+    """Serve the PWA — phone interface to Jeeves."""
+    return FileResponse(_STATIC_DIR / "index.html", media_type="text/html")
+
+
+# Mount static files (manifest, sw.js, icons) under /app/
+app.mount("/app", StaticFiles(directory=str(_STATIC_DIR)), name="pwa")
