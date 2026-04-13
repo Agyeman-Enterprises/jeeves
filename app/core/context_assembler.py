@@ -1,128 +1,75 @@
+﻿"""
+Context Assembler - Builds system prompt for every LLM call.
+No contradictions, no retirement pressure. Butler tone only.
 """
-Context Assembler — Before EVERY LLM call, assemble the full context.
-Retrieves: goals, contradictions, recent events, schedule, Nexus alerts,
-active open loops, preference directives.
-
-This is what makes Jeeves's responses grounded in reality, not generic.
-"""
-
 from __future__ import annotations
-
 import logging
-from datetime import datetime
 from typing import Dict, List, Optional
-
 from app.memory.aqui_client import AquiClient
 from app.memory.event_store import EventStore
-from app.modeling.contradiction_engine import ContradictionEngine
 from app.modeling.mimograph import Mimograph
 from app.modeling.weighting_engine import WeightingEngine
 
 LOGGER = logging.getLogger(__name__)
 
-
 class ContextAssembler:
-    """
-    Builds the system prompt context block injected before every LLM call.
-    Makes Jeeves aware of who Akua is, what she's doing, and what matters.
-    """
-
-    def __init__(
-        self,
-        weighting: WeightingEngine,
-        mimograph: Mimograph,
-        contradictions: ContradictionEngine,
-        event_store: EventStore,
-        aqui: AquiClient,
-    ):
+    def __init__(self, weighting: WeightingEngine, mimograph: Mimograph,
+                 event_store: EventStore, aqui: AquiClient):
         self.weighting = weighting
         self.mimograph = mimograph
-        self.contradictions = contradictions
         self.event_store = event_store
         self.aqui = aqui
 
     async def assemble(self, user_message: str = "") -> str:
-        """
-        Build the full context block for an LLM call.
-        Returns a formatted string to inject as system context.
-        """
         parts = []
-
-        # ── Identity ──────────────────────────────────────────────
         parts.append(self._identity_block())
-
-        # ── Top goals ─────────────────────────────────────────────
         goals = self.weighting.get_goals()
-        parts.append(self._goals_block(goals[:7]))
-
-        # ── Top contradictions ────────────────────────────────────
-        contradiction_report = self.contradictions.get_full_contradiction_report()
-        if contradiction_report:
-            parts.append(self._contradictions_block(contradiction_report[:3]))
-
-        # ── Recent events (last 24h) ─────────────────────────────
-        recent = self.event_store.query(hours=24, limit=20)
+        if goals:
+            parts.append(self._goals_block(goals[:5]))
+        recent = self.event_store.query(hours=24, limit=15)
         if recent:
             parts.append(self._events_block(recent))
-
-        # ── Aqui memory context ───────────────────────────────────
         if user_message:
             try:
                 aqui_results = await self.aqui.search(user_message, limit=5)
                 if aqui_results:
                     parts.append(self._aqui_block(aqui_results))
             except Exception as exc:
-                LOGGER.warning("Aqui search failed during context assembly: %s", exc)
-
-        # ── Personality directives ────────────────────────────────
-        parts.append(self._personality_block())
-
-        # ── Retirement countdown ──────────────────────────────────
-        countdown = self.weighting.get_retirement_countdown()
-        parts.append(f"RETIREMENT COUNTDOWN: {countdown['days_left']} days. Need ${countdown['monthly_needed']:,}/month.")
-
+                LOGGER.warning("Aqui search failed: %s", exc)
+        parts.append(self._format_block())
         return "\n\n".join(parts)
 
     def _identity_block(self) -> str:
-        return """YOU ARE JEEVES — Dr. Akua Agyeman's Chief of Staff.
-You are a consummate professional who WORKS, not lectures. You are modeled after P.G. Wodehouse's
-Jeeves: competent, discreet, proactive, and always two steps ahead.
+        return """YOU ARE JJ - Dr. Akua Agyeman's personal butler and chief of staff.
 
-YOUR JOB IS TO:
-- Surface opportunities and actionable next steps (not opinions about her lifestyle)
-- Direct agents to do work: "I've had Stratova draft posts. Approve?" not "You should market more"
-- Report what you've DONE, what needs her decision, and what's coming next
-- Schedule around her real constraints (hospital shifts, energy, time zones)
-- Track her 40+ businesses and tell her which need attention and why
+WHO AAA IS:
+- 60-year-old Med-Peds physician, Chief Hospitalist at Guam Memorial Hospital
+- Building a business empire to transition out of medicine
+- 34+ businesses including SaaS apps, books, and a content/marketing engine
+- Lives in Guam (ChST, UTC+10). Swims. Dislikes cooking. Workaholic.
+- Revenue goal: $85K this year across the portfolio
 
-YOU DO NOT:
-- Lecture about work-life balance, avoidance patterns, or lifestyle choices
-- Say "you should" without having already started doing it
-- Moralize about contradictions — just surface facts and ask what she wants
-- Generate walls of text — be brief, specific, actionable
-- Use ALL CAPS, bold warnings, or confrontational tone
+YOUR JOB:
+- Work first, report second. "I have had Stratova draft 3 posts. Approve?" not "You should market more."
+- Surface opportunities: leads, content gaps, revenue moves, scheduling conflicts
+- Protect her time and energy. She has hospital shifts - plan around them.
+- Dispatch agents (Nexus, Neuralia, ContentForge, Stratova) and report what they did
+- Learn her patterns. If she liked Marley Spoon meals, find equivalents.
+- Track income, shifts, and TaxRx updates proactively
 
-TONE: Calm, competent, brief. Like a butler who has already handled 90% of it and just needs
-a nod to handle the rest. Think: "The matter has been attended to, ma'am" not "YOU NEED TO ACT NOW."
-
-She is a 60yo Med-Peds physician (Chief Hospitalist, Guam Memorial), building a business empire
-to retire from medicine by EOY 2026. She has ~40 SaaS apps, 17 books, and a marketing engine.
-Your job is to make things happen, not tell her what she already knows."""
+WHAT YOU NEVER DO:
+- Lecture about work-life balance, avoidance, or lifestyle choices
+- Surface the same concern more than once in 24 hours
+- Use ALL CAPS, CRITICAL, HARD TRUTH, you need to, or countdown pressure
+- Generate walls of text
+- Ask her to do things you could do or dispatch an agent to do
+- Moralise. Ever."""
 
     def _goals_block(self, goals: List[Dict]) -> str:
-        lines = ["CURRENT GOALS (ranked by effective weight — what behavior shows, not just what she says):"]
+        lines = ["CURRENT PRIORITIES (by effective weight):"]
         for i, g in enumerate(goals, 1):
-            stated = g.get("stated_weight", 0)
-            effective = g.get("effective_weight", 0)
-            contradiction = g.get("contradiction_score", 0)
-            marker = " ⚠️CONTRADICTION" if contradiction > 0.4 else ""
-            lines.append(f"  {i}. {g['label']}: effective={effective:.0%} (stated={stated:.0%}){marker}")
-        return "\n".join(lines)
-
-    def _contradictions_block(self, contradictions: List[Dict]) -> str:
-        lines = ["ACTIVE CONTRADICTIONS (address these when relevant):"]
-        for c in contradictions:
-            lines.append(f"  • [{c['severity'].upper()}] {c['explanation']}")
+            weight = g.get("effective_weight", 0)
+            lines.append(f"  {i}. {g.get('label', 'Unknown')} - {weight:.0%}")
         return "\n".join(lines)
 
     def _events_block(self, events: List[Dict]) -> str:
@@ -135,20 +82,16 @@ Your job is to make things happen, not tell her what she already knows."""
         return "\n".join(lines)
 
     def _aqui_block(self, results: List[Dict]) -> str:
-        lines = ["RELEVANT MEMORIES (from Aqui vault):"]
+        lines = ["RELEVANT MEMORIES (from Aqui):"]
         for r in results[:5]:
             content = r.get("content", r.get("text", ""))[:120]
-            lines.append(f"  • {content}")
+            lines.append(f"  - {content}")
         return "\n".join(lines)
 
-    def _personality_block(self) -> str:
+    def _format_block(self) -> str:
         return """RESPONSE FORMAT:
-- Lead with what you've DONE or what's ready for her decision
-- "I've done X. Need your approval for Y. Z is scheduled for tomorrow."
-- Keep responses under 150 words unless she asks for detail
-- Use bullet points, not paragraphs
-- End with a clear ask or next action, not a lecture
-- When contradictions exist, state the fact once. Don't repeat it.
-  "Marketing deferred 8 times. Want me to assign it to Neuralia instead?"
-  NOT "You keep avoiding marketing which is critical to your goals..."
-- Every response should move something forward, not just observe."""
+- Lead with what you have DONE or what needs a decision
+- Under 150 words unless detail is requested
+- End with one clear ask or next action
+- Never repeat a concern you have already raised today
+- Tone: calm, competent, like a butler who has already handled it"""
