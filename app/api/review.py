@@ -1,6 +1,6 @@
 """
 Review API — Query the brain's understanding.
-Goals, contradictions, mimograph, interventions, profile.
+Goals, suggestions, mimograph, profile.
 """
 
 from __future__ import annotations
@@ -21,19 +21,12 @@ async def get_goals():
     return {"goals": orch.weighting.get_goals()}
 
 
-@router.get("/contradictions")
-async def get_contradictions():
-    """Get active contradictions with explanations."""
+@router.get("/suggestions")
+async def get_suggestions(max_suggestions: int = 4):
+    """Get today's action-first suggestions from JJ."""
     orch = get_orchestrator()
-    return {"contradictions": orch.contradictions.get_full_contradiction_report()}
-
-
-@router.get("/interventions")
-async def get_interventions(max_interventions: int = 3):
-    """Get today's recommended interventions."""
-    orch = get_orchestrator()
-    interventions = orch.interventions.decide_interventions(max_interventions)
-    return {"interventions": [i.model_dump() for i in interventions]}
+    suggestions = orch.suggestions.generate(max_suggestions=max_suggestions)
+    return {"suggestions": [s.to_dict() for s in suggestions]}
 
 
 @router.get("/what-matters-now")
@@ -57,15 +50,15 @@ async def get_mimograph():
     return orch.mimograph.get_full_graph()
 
 
-@router.get("/retirement")
-async def retirement_countdown():
-    """Retirement countdown and income gap."""
-    orch = get_orchestrator()
-    return orch.weighting.get_retirement_countdown()
-
-
 @router.get("/events")
 async def recent_events(hours: int = 24, limit: int = 50):
     """Get recent events."""
     orch = get_orchestrator()
     return {"events": orch.event_store.query(hours=hours, limit=limit)}
+
+
+@router.get("/health")
+async def brain_health():
+    """Brain status and service health."""
+    orch = get_orchestrator()
+    return await orch.health_check()

@@ -1,5 +1,5 @@
 """
-Jeeves Configuration — All env-driven, no local-only assumptions.
+Jeeves/JJ Configuration — All env-driven, no local-only assumptions.
 """
 
 from __future__ import annotations
@@ -14,22 +14,25 @@ class Settings(BaseSettings):
     """All configuration from environment variables."""
 
     # ── Identity ───────────────────────────────────────────────────────
-    app_name: str = "Jeeves"
-    version: str = "1.0.0"
+    app_name: str = "JJ"
+    version: str = "2.0.0"
     debug: bool = False
 
     # ── Auth ───────────────────────────────────────────────────────────
     api_key: str = ""  # JEEVES_API_KEY — required for all requests
 
-    # ── Supabase (persistence) ─────────────────────────────────────────
+    # ── Supabase (JJ state + preferences) ─────────────────────────────
     supabase_url: str = ""
     supabase_service_role_key: str = ""
+
+    # ── JarvisCore Supabase (Aqui, Nexus, Jarvis data) ────────────────
+    jarviscore_supabase_url: str = ""
+    jarviscore_service_role_key: str = ""
 
     # ── LLM (thinking) ─────────────────────────────────────────────────
     litellm_base_url: str = "https://ai.agyemanenterprises.com"
     litellm_api_key: str = ""
     litellm_model: str = "ollama/deepseek-r1:32b"
-    # Fallback to Anthropic if local is down
     anthropic_api_key: str = ""
     fallback_model: str = "claude-sonnet-4-20250514"
 
@@ -38,32 +41,35 @@ class Settings(BaseSettings):
     aqui_api_key: str = ""
 
     # ── Nexus (business intelligence) ──────────────────────────────────
-    nexus_base_url: str = "https://nexus.agyemanenterprises.com"
+    nexus_base_url: str = "https://nexus-eight-gold.vercel.app"
     nexus_internal_key: str = ""
 
     # ── Ghexit (communications) ────────────────────────────────────────
     ghexit_base_url: str = "https://ghexit.agyemanenterprises.com"
     ghexit_service_token: str = ""
 
-    # ── Vector (OCR/indexing) ──────────────────────────────────────────
-    vector_base_url: str = ""  # Not yet deployed as service
-
-    # ── AlrtMe (SMS) ───────────────────────────────────────────────────
+    # ── AlrtMe (push notifications) ────────────────────────────────────
     alrtme_api_key: str = ""
     alrtme_channel: str = "akualrts"
     alrtme_base_url: str = "https://alrtme.co"
 
-    # ── Akua contact ───────────────────────────────────────────────────
+    # ── Google (Gmail + Calendar) ──────────────────────────────────────
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_refresh_token: str = ""
+    google_calendar_id: str = "primary"
+
+    # ── AAA contact ────────────────────────────────────────────────────
     owner_phone: str = "+18083213384"
     owner_email: str = "isaalia@gmail.com"
 
-    # ── Scheduling ─────────────────────────────────────────────────────
+    # ── Scheduling (Guam timezone) ─────────────────────────────────────
     timezone: str = "Pacific/Guam"
     morning_hour: int = 7
-    evening_hour: int = 18
+    checkin_hour: int = 18   # 6pm check-in
     reflection_hour: int = 23
 
-    # ── GitHub (repo scanning) ─────────────────────────────────────────
+    # ── GitHub ─────────────────────────────────────────────────────────
     github_token: str = ""
     github_org: str = "Agyeman-Enterprises"
 
