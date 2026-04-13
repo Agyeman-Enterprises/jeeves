@@ -1,4 +1,4 @@
-"""
+﻿"""
 Suggestion Engine — JJ decides what to DO and suggests it.
 Action-first, butler tone. Never lectures, never shames.
 """

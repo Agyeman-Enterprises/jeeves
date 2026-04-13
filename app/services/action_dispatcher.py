@@ -1,4 +1,4 @@
-"""
+﻿"""
 Action Dispatcher — JJ dispatches work to agents, then reports.
 JJ never says "you should post more." JJ says "ContentForge has 3 posts ready. Approve?"
 """
