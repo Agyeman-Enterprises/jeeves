@@ -6,6 +6,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from app.core.orchestrator import get_orchestrator
+from app.brain.mimograph import get_mimograph
 
 LOGGER = logging.getLogger(__name__)
 
@@ -55,6 +56,15 @@ async def run_morning_cycle():
         LOGGER.error("[Morning] Briefing failed: %s", exc)
         briefing_text = "Good morning. Running into a hiccup — will have it sorted shortly."
         briefing = {}
+
+    # Append brain intelligence (goals + contradictions)
+    try:
+        brain_brief = get_mimograph().generate_morning_briefing()
+        brain_text = brain_brief.get("text", "")
+        if brain_text:
+            briefing_text = briefing_text + "\n\n" + brain_text[:600]
+    except Exception as exc:
+        LOGGER.warning("[Morning] Brain briefing failed: %s", exc)
     try:
         await orch.alrtme.send(title="JJ Morning Brief", message=briefing_text[:800],
                                priority="normal", source="jj", topic="briefing")

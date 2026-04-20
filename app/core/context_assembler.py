@@ -31,11 +31,12 @@ class ContextAssembler:
             parts.append(self._events_block(recent))
         if user_message:
             try:
-                aqui_results = await self.aqui.search(user_message, limit=5)
-                if aqui_results:
-                    parts.append(self._aqui_block(aqui_results))
+                # AquiClient.search already handles mem0 fallback internally
+                mem_results = await self.aqui.search(user_message, limit=5)
+                if mem_results:
+                    parts.append(self._aqui_block(mem_results))
             except Exception as exc:
-                LOGGER.warning("Aqui search failed: %s", exc)
+                LOGGER.warning("Memory search failed: %s", exc)
         parts.append(self._format_block())
         return "\n\n".join(parts)
 

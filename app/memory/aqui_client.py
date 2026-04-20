@@ -26,7 +26,7 @@ class AquiClient:
         self._headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
 
     async def search(self, query: str, limit: int = 10) -> List[Dict]:
-        """Search Aqui for relevant memories."""
+        """Search Aqui for relevant memories; falls back to mem0 if Aqui unreachable."""
         try:
             async with httpx.AsyncClient(timeout=15) as client:
                 resp = await client.post(
@@ -37,8 +37,15 @@ class AquiClient:
                 resp.raise_for_status()
                 return resp.json().get("results", [])
         except Exception as exc:
-            LOGGER.warning("Aqui search failed: %s", exc)
-            return []
+            LOGGER.warning("Aqui search failed (%s) — falling back to mem0", exc)
+            try:
+                from app.memory.mem0_service import get_mem0
+                mem0_results = get_mem0().search(query, limit=limit)
+                return [{"content": m.get("memory", ""), "source": "mem0"}
+                        for m in mem0_results if m.get("memory")]
+            except Exception as m0_exc:
+                LOGGER.warning("mem0 fallback also failed: %s", m0_exc)
+                return []
 
     async def get_context_pack(self, goal: str, max_tokens: int = 2500) -> Dict:
         """Build a context pack for a specific goal."""
@@ -89,7 +96,7 @@ class AquiClient:
             return []
 
     async def write_reflection(self, content: str, importance: int = 7) -> bool:
-        """Write a reflection back to Aqui."""
+        """Write a reflection to Aqui; falls back to mem0 if Aqui unreachable."""
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.post(
@@ -103,8 +110,14 @@ class AquiClient:
                 )
                 return resp.status_code < 400
         except Exception as exc:
-            LOGGER.warning("Aqui write reflection failed: %s", exc)
-            return False
+            LOGGER.warning("Aqui write reflection failed (%s) — falling back to mem0", exc)
+            try:
+                from app.memory.mem0_service import get_mem0
+                get_mem0().record_reflection(content)
+                return True
+            except Exception as m0_exc:
+                LOGGER.warning("mem0 reflection fallback failed: %s", m0_exc)
+                return False
 
     async def health(self) -> bool:
         try:

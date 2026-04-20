@@ -1,0 +1,109 @@
+name: Gate Check — GATE7.txt Enforcement
+
+# ============================================================
+# This workflow is auto-installed into every repo by ae-enforcement.
+# It fires on every push and PR — blocks merges if GATE7.txt is
+# missing or is a stub template.
+#
+# Managed by: github.com/Agyeman-Enterprises/ae-enforcement
+# DO NOT REMOVE. DO NOT MODIFY without updating ae-enforcement.
+# ============================================================
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  gate7-check:
+    name: GATE7.txt quality gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check GATE7.txt exists and is real content
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  AE ENFORCEMENT — Gate 7 Check"
+          echo "  Repo: ${{ github.repository }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          FAIL=0
+
+          # ── GATE7.txt must exist ───────────────────
+          if [ ! -f "GATE7.txt" ]; then
+            echo ""
+            echo "❌ GATE7.txt MISSING"
+            echo ""
+            echo "   No code may be committed without a product-specific"
+            echo "   behavioral test specification. You must:"
+            echo "     1. Read this codebase thoroughly"
+            echo "     2. Create GATE7.txt with real routes, entities,"
+            echo "        and behavioral flows — NOT a template with brackets"
+            echo "     3. Run: bash scripts/run-gate.sh"
+            FAIL=1
+          else
+            SIZE=$(wc -c < GATE7.txt | tr -d ' ')
+            echo "✓ GATE7.txt found (${SIZE} bytes)"
+
+            # ── Must be > 500 bytes ────────────────────
+            if [ "$SIZE" -lt 500 ]; then
+              echo "❌ GATE7.txt too small (${SIZE} bytes, minimum 500)"
+              echo "   A real behavioral spec for a real app is never this small."
+              FAIL=1
+            fi
+
+            # ── Must not contain bracket placeholders ──
+            BRACKET_PATTERNS=(
+              '\[APP_NAME\]'
+              '\[One sentence'
+              '\[The single most'
+              '\[List every route'
+              '\[Core entity'
+              '\[PORT\]'
+              '\[Claude Code must'
+              '\[PENDING'
+              'Claude Code must fill'
+              'fill this in'
+              'STATUS: PENDING'
+            )
+
+            for pattern in "${BRACKET_PATTERNS[@]}"; do
+              if grep -qE "$pattern" GATE7.txt 2>/dev/null; then
+                echo "❌ GATE7.txt is a stub — placeholder found: '$pattern'"
+                echo "   Read the actual source. Write real content. No shortcuts."
+                FAIL=1
+                break
+              fi
+            done
+
+            # ── Must have ≥3 real route checks ────────
+            ROUTE_COUNT=$(grep -cE '^\s+\[ \] /' GATE7.txt 2>/dev/null || echo "0")
+            if [ "$ROUTE_COUNT" -lt 3 ]; then
+              echo "❌ GATE7.txt has only $ROUTE_COUNT route checks (minimum 3)"
+              echo "   Routes must be read from the actual source code."
+              FAIL=1
+            else
+              echo "✓ $ROUTE_COUNT route checks found"
+            fi
+          fi
+
+          # ── Final verdict ──────────────────────────
+          echo ""
+          if [ "$FAIL" -eq 1 ]; then
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "⛔ GATE CHECK FAILED — this push is blocked"
+            echo ""
+            echo "GATE7.txt is the first gate in the Agyeman Enterprises"
+            echo "release system. Every repo must have a real, app-specific"
+            echo "behavioral test spec before any code can be shipped."
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            exit 1
+          fi
+
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Gate 7 check passed"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

@@ -1,93 +1,126 @@
-JEEVES — GATE 7: PRODUCT-SPECIFIC BEHAVIORAL TEST
+JJ — GATE 7: PRODUCT-SPECIFIC BEHAVIORAL TEST
 =====================================================
-Jeeves is Akua's autonomous life manager — a single FastAPI service
-that tracks goals, learns behavior patterns, detects contradictions,
-generates briefings, and manages interventions.
+JJ is Akua's autonomous life manager — the merger of Jeeves (butler layer)
+and JARVIS (37+ agents, LangGraph, brain engine). Single FastAPI service.
+All state lives in JJ Supabase (tzjygaxpzrtevlnganjs). mem0 is the local
+memory fallback when Aqui (Hetzner) is unreachable.
 
 This file is read by RELEASE_GATE.txt Gate 7.
-Every check below must PASS before Jeeves can be called done.
+Every check below must PASS before JJ can be called done.
 
 ===================================================================
-SECTION A: HEALTH + API ENDPOINTS
+SECTION A: HEALTH + CORE API ENDPOINTS
 ===================================================================
 
-  [x] /health → GET returns status=alive, services (aqui/nexus/ghexit), brain stats
-  [x] /review/goals → GET returns 14 seed goals ranked by effective_weight
-  [x] /review/contradictions → GET returns detected contradictions with severity
-  [x] /review/retirement → GET returns days_left, monthly_needed
-  [x] /review/what-matters-now → GET returns top 5 priorities
-  [x] /review/mimograph → GET returns nodes (17) and edges (11)
-  [x] /chat → POST accepts message, returns memory-grounded response
-  [x] /ingest → POST accepts normalized events from any source
-  [x] /ingest/observe → POST records behavior and updates goal weights
-  [x] /schedule/briefing → GET generates morning briefing via LLM
-  [x] /review/events → GET returns recent events
+  [ ] GET /health → status=alive, services dict, brain stats (goals_tracked, nodes)
+  [ ] GET /brain/status → goals_tracked=14, belief_nodes=17, events_last_7d
+  [ ] GET /brain/goals → returns 14 goals ranked by effective_weight
+  [ ] GET /brain/contradictions → returns contradiction list with severity
+  [ ] GET /brain/retirement → days_left, monthly_needed ($83,333/mo)
+  [ ] GET /brain/profile → full profile summary (top goals + traits + contradictions)
+  [ ] GET /brain/nodes → returns 17 belief nodes
+  [ ] GET /brain/traits → returns nodes filtered to type=trait
+  [ ] GET /brain/briefing → generates morning briefing (text + goals + questions)
+  [ ] GET /brain/questions → returns 3 targeted daily check-in questions
+  [ ] POST /brain/answer → records answer, returns insight
+  [ ] POST /brain/reflect → runs reflection cycle, returns reflection list
+  [ ] GET /brain/insights → full intelligence report
+  [ ] POST /brain/observe → records behavioral observation, updates goal weight
 
 ===================================================================
-SECTION B: WEIGHTING ENGINE (CORE RANKING)
+SECTION B: JANG GRAPH (LANGGRAPH EXECUTION)
 ===================================================================
 
-  [x] Seed goals loaded with correct stated_weight values
-  [x] record_evidence() updates revealed_weight via EMA
-  [x] record_evidence() increments action_count or skip_count
-  [x] Effective weight computed from stated + revealed + persistence + recency
-  [x] Contradiction score amplified for core goals (stated >= 0.8)
-  [x] run_nightly_update() applies decay to all goals
-  [x] Retirement countdown returns correct days remaining
+  [ ] GET /jang/status → graph_compiled=true (or false with graceful fallback)
+  [ ] POST /jang/chat {"message": "..."} → returns response with sources_used
+  [ ] POST /jang/chat → memory_context populated from mem0 when Aqui is down
+  [ ] POST /jang/chat → response under 150 words (butler tone, not wall of text)
+  [ ] POST /jang/chat high-importance message → importance_score >= 0.8
+  [ ] POST /jang/chat after 10 turns → reflection generated (should_reflect=true)
+  [ ] JANG fallback: langgraph not installed → direct Claude response returned, no crash
 
 ===================================================================
-SECTION C: MIMOGRAPH (BELIEF GRAPH)
+SECTION C: AGENTS + EMPIRE DISPATCH
 ===================================================================
 
-  [x] Seed nodes created (traits, behaviors, avoidances, rewards, blockers, projects)
-  [x] Seed edges created (supports, contradicts, blocks, drains, energizes)
-  [x] what_blocks(goal_id) returns blocking nodes
-  [x] get_contradictions_for(goal_id) returns contradicting behaviors
-  [x] update_node() adjusts strength and confidence from evidence
+  [ ] GET /empire/agents → returns list of available agents (>= 30)
+  [ ] POST /empire/dispatch {"agent": "nonexistent"} → 404 (not 500)
+  [ ] Agent preloader at startup: no crash even if Phase 5 services missing
+  [ ] app/agents/base.py imports cleanly (no backend.* references)
+  [ ] All 37+ agent files have app.* imports (verify: grep -r "from backend" app/agents/ = 0 results)
 
 ===================================================================
-SECTION D: CONTEXT ASSEMBLER + LLM
+SECTION D: MEMORY RESILIENCE (AQUI + MEM0 FALLBACK)
 ===================================================================
 
-  [ ] /chat → context assembly includes identity, goals, contradictions, events, Aqui memory
-  [ ] /chat → LLM primary path (LiteLLM/Ollama) returns real response
-  [ ] /chat → LLM fallback (Anthropic) returns real response when primary is down
-  [ ] /schedule/briefing → returns LLM-generated morning briefing with retirement countdown
+  [ ] GET /jang/status → mem0_available=true (if mem0ai installed)
+  [ ] mem0 search with Aqui down → returns results from local vector store
+  [ ] aqui_client.search() with Aqui unreachable → falls back to mem0 (not empty list)
+  [ ] aqui_client.write_reflection() with Aqui down → writes to mem0 instead
+  [ ] POST /jang/chat → write_back_node persists conversation to mem0
+  [ ] mem0 data dir exists at JJ_MEM0_DIR or C:/DEV/jeeves/data/mem0
 
 ===================================================================
-SECTION E: DAILY CYCLES (SCHEDULER)
+SECTION E: WEIGHTING ENGINE + BRAIN (JJ SUPABASE)
 ===================================================================
 
-  [x] APScheduler starts with 3 jobs (morning, nightly, repo_audit)
-  [ ] Morning cycle pulls Aqui data, generates briefing, sends via AlrtMe
-  [ ] Nightly reconciliation runs weight update, generates reflections
-  [ ] Repo audit triggers Nexus GitHub sync
+  [ ] POST /brain/observe → observation recorded in jeeves_events table
+  [ ] POST /brain/observe with related_goal → jeeves_goals.effective_weight updated
+  [ ] GET /brain/goals after observation → reflects updated weight in Supabase
+  [ ] Server restart → goal weights still reflect previous observations (Supabase persistence)
+  [ ] Contradiction score: stated_weight high, action_count low → score > 0.2
+  [ ] Nightly decay: run_nightly_decay() → revealed_weight decreases for inactive goals
+  [ ] Reflection cycle: run_reflection_cycle() → reflections stored in jeeves_state
 
 ===================================================================
-SECTION F: THE MANDATORY PERSISTENCE TEST
+SECTION F: CONTEXT ASSEMBLER + CHAT
 ===================================================================
 
-  [x] POST /ingest/observe with related_goal → goal weight updated in Supabase
-  [x] GET /review/goals after observation → reflects updated weight
-  [ ] Restart server → goal weights still reflect previous observations
-  [ ] Multiple observations over time → effective_weight converges toward behavior
-  [ ] Contradiction score increases when stated high but behavior low
+  [ ] POST /chat → returns real LLM response (not empty)
+  [ ] POST /chat → context includes identity block (WHO AAA IS section)
+  [ ] POST /chat → context includes current priorities (top 5 goals)
+  [ ] POST /chat → Aqui/mem0 memory results injected when query matches past context
+  [ ] POST /chat → response under 150 words for simple queries (butler tone)
 
 ===================================================================
-SECTION G: DEPLOYMENT
+SECTION G: DAILY CYCLES (SCHEDULER)
 ===================================================================
 
-  [ ] Docker image builds successfully
-  [ ] Container starts and /health returns 200
-  [ ] Deploy to Coolify on Hetzner
-  [ ] External access at jeeves.agyemanenterprises.com
+  [ ] APScheduler starts with 4 jobs: repo_audit@6, morning@7, checkin@18, nightly@23
+  [ ] Morning cycle: generates briefing + appends brain brief (goals + contradictions)
+  [ ] Morning cycle: AlrtMe send called with briefing text
+  [ ] Nightly reconciliation: runs nightly_decay() + run_reflection_cycle()
+  [ ] Nightly reconciliation: writes reflections to Aqui (or mem0 if Aqui down)
+  [ ] Manual trigger: POST /morning-briefing → returns briefing dict
+  [ ] Manual trigger: POST /nightly-reconciliation → returns reconciliation summary
+
+===================================================================
+SECTION H: DEPLOYMENT (DOCKER + COOLIFY)
+===================================================================
+
+  [ ] docker build -t jj:latest . → exits 0
+  [ ] docker run jj:latest → /health returns 200 within 30s
+  [ ] Coolify deploy: container starts at port 4004
+  [ ] External: jeeves.agyemanenterprises.com/health → status=alive
+  [ ] .env vars confirmed in Coolify: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+      ANTHROPIC_API_KEY, OPENAI_API_KEY, AQUI_BASE_URL, AQUI_API_KEY, JJ_API_KEY
+
+===================================================================
+SECTION I: THE MANDATORY PERSISTENCE TEST
+===================================================================
+
+  [ ] POST /brain/observe → records event in jeeves_events
+  [ ] GET /brain/goals → shows updated effective_weight
+  [ ] Restart server → weights unchanged (Supabase, not in-memory)
+  [ ] POST /jang/chat → conversation written to mem0 (check data/mem0 dir grows)
+  [ ] POST /jang/chat 10 times → reflection generated at turn 10
 
 ===================================================================
 WHAT CLAUDE IS NOT ALLOWED TO SUBSTITUTE FOR THIS TEST
 ===================================================================
 
-  - "tsc passed" → NOT A PRODUCT TEST
   - "build succeeded" → NOT A PRODUCT TEST
-  - "component renders" → NOT A PRODUCT TEST
+  - "imports clean" → NOT A PRODUCT TEST
   - "API returns 200" alone → NOT A PRODUCT TEST
-  - Only the full end-to-end flow above counts as PASS.
+  - Only end-to-end behavioral flows above count as PASS.
+  - Every [ ] must be manually verified against a running JJ instance.

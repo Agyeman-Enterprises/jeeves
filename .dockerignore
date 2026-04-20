@@ -1,0 +1,17 @@
+.env
+.env.*
+data/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+.claude/
+*.log
+client_secret*.json
+tests/
+PLAN.md
+GATE7.txt
+gate7-map.json
+scripts/

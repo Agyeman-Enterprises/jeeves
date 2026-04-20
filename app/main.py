@@ -20,7 +20,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from app.api.brain import router as brain_router
 from app.api.chat import router as chat_router
+from app.api.empire import router as empire_router
+from app.api.jang import router as jang_router
 from app.api.ingest import router as ingest_router
 from app.api.review import router as review_router
 from app.api.schedule import router as schedule_router
@@ -111,7 +114,10 @@ app.add_middleware(CORSMiddleware,
     allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 # ── Routes ─────────────────────────────────────────────────────────────
+app.include_router(brain_router)
 app.include_router(chat_router)
+app.include_router(empire_router)
+app.include_router(jang_router)
 app.include_router(ingest_router)
 app.include_router(review_router)
 app.include_router(schedule_router)

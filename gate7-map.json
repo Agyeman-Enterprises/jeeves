@@ -1,0 +1,280 @@
+{
+  "app": "JJ",
+  "version": "2.0.0",
+  "gate7_file": "GATE7.txt",
+  "items": [
+    {
+      "gate7_id": "A-01",
+      "description": "/health returns status=alive with services and brain stats",
+      "spec_file": "tests/test_health.py",
+      "test_title": "health endpoint returns alive status with brain stats",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "A-02",
+      "description": "/review/goals returns 14 seed goals ranked by effective_weight",
+      "spec_file": "tests/test_review.py",
+      "test_title": "goals endpoint returns 14 ranked goals",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "A-03",
+      "description": "/review/contradictions returns detected contradictions with severity",
+      "spec_file": "tests/test_review.py",
+      "test_title": "contradictions endpoint returns scored contradictions",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "A-04",
+      "description": "/review/retirement returns days_left and monthly_needed",
+      "spec_file": "tests/test_review.py",
+      "test_title": "retirement endpoint returns countdown and target",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "A-05",
+      "description": "/review/what-matters-now returns top 5 priorities",
+      "spec_file": "tests/test_review.py",
+      "test_title": "what-matters-now returns top 5 weighted priorities",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "A-06",
+      "description": "/review/mimograph returns nodes(17) and edges(11)",
+      "spec_file": "tests/test_review.py",
+      "test_title": "mimograph endpoint returns belief graph with nodes and edges",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "A-07",
+      "description": "/chat accepts message and returns memory-grounded response",
+      "spec_file": "tests/test_chat.py",
+      "test_title": "chat endpoint returns non-empty grounded response",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "A-08",
+      "description": "/ingest accepts normalized events from any source",
+      "spec_file": "tests/test_ingest.py",
+      "test_title": "ingest endpoint accepts and stores normalized event",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "A-09",
+      "description": "/ingest/observe records behavior and updates goal weights",
+      "spec_file": "tests/test_ingest.py",
+      "test_title": "observe endpoint updates goal effective_weight in DB",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "A-10",
+      "description": "/schedule/briefing generates morning briefing via LLM",
+      "spec_file": "tests/test_schedule.py",
+      "test_title": "briefing endpoint returns LLM-generated text",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "A-11",
+      "description": "/review/events returns recent events",
+      "spec_file": "tests/test_review.py",
+      "test_title": "events endpoint returns recent event list",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "B-01",
+      "description": "Seed goals loaded with correct stated_weight values",
+      "spec_file": "tests/test_weighting.py",
+      "test_title": "seed goals have correct stated_weight values",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "B-02",
+      "description": "record_evidence updates revealed_weight via EMA",
+      "spec_file": "tests/test_weighting.py",
+      "test_title": "record_evidence updates revealed_weight exponential moving average",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "B-03",
+      "description": "record_evidence increments action_count or skip_count",
+      "spec_file": "tests/test_weighting.py",
+      "test_title": "record_evidence increments correct counter",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "B-04",
+      "description": "Effective weight computed from stated + revealed + persistence + recency",
+      "spec_file": "tests/test_weighting.py",
+      "test_title": "effective_weight combines all four components",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "B-05",
+      "description": "Contradiction score amplified for core goals (stated >= 0.8)",
+      "spec_file": "tests/test_weighting.py",
+      "test_title": "contradiction score amplified for high-stated-weight goals",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "B-06",
+      "description": "run_nightly_update applies decay to all goals",
+      "spec_file": "tests/test_weighting.py",
+      "test_title": "nightly update applies decay to goal weights",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "B-07",
+      "description": "Retirement countdown returns correct days remaining",
+      "spec_file": "tests/test_review.py",
+      "test_title": "retirement countdown returns positive days_left integer",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "C-01",
+      "description": "Seed nodes created (traits, behaviors, avoidances, rewards, blockers, projects)",
+      "spec_file": "tests/test_mimograph.py",
+      "test_title": "belief graph has seed nodes across all types",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "C-02",
+      "description": "Seed edges created (supports, contradicts, blocks, drains, energizes)",
+      "spec_file": "tests/test_mimograph.py",
+      "test_title": "belief graph has seed edges with all relationship types",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "C-03",
+      "description": "what_blocks(goal_id) returns blocking nodes",
+      "spec_file": "tests/test_mimograph.py",
+      "test_title": "what_blocks returns nodes with blocks edge type",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "C-04",
+      "description": "get_contradictions_for(goal_id) returns contradicting behaviors",
+      "spec_file": "tests/test_mimograph.py",
+      "test_title": "get_contradictions_for returns contradicts edge nodes",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "C-05",
+      "description": "update_node adjusts strength and confidence from evidence",
+      "spec_file": "tests/test_mimograph.py",
+      "test_title": "update_node changes strength and confidence values",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "D-01",
+      "description": "chat context assembly includes identity, goals, contradictions, events, Aqui memory",
+      "spec_file": "tests/test_chat.py",
+      "test_title": "chat context includes all five components",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "D-02",
+      "description": "chat LLM primary path returns real response",
+      "spec_file": "tests/test_chat.py",
+      "test_title": "chat LLM primary path returns non-empty string response",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "D-03",
+      "description": "chat LLM fallback returns response when primary is down",
+      "spec_file": "tests/test_chat.py",
+      "test_title": "chat falls back to Anthropic when primary LLM unreachable",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "D-04",
+      "description": "briefing returns LLM-generated morning briefing with retirement countdown",
+      "spec_file": "tests/test_schedule.py",
+      "test_title": "briefing includes retirement countdown in LLM output",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "E-01",
+      "description": "APScheduler starts with morning, nightly, and repo_audit jobs",
+      "spec_file": "tests/test_scheduler.py",
+      "test_title": "scheduler starts with all required jobs registered",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "E-02",
+      "description": "Morning cycle pulls Aqui data, generates briefing, sends via AlrtMe",
+      "spec_file": "tests/test_scheduler.py",
+      "test_title": "morning cycle completes without exception",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "E-03",
+      "description": "Nightly reconciliation runs weight update and generates reflections",
+      "spec_file": "tests/test_scheduler.py",
+      "test_title": "nightly reconciliation updates weights and writes reflections",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "F-01",
+      "description": "POST /ingest/observe updates goal weight in Supabase",
+      "spec_file": "tests/test_ingest.py",
+      "test_title": "observe persists goal weight change to Supabase",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "F-02",
+      "description": "GET /review/goals after observation reflects updated weight",
+      "spec_file": "tests/test_ingest.py",
+      "test_title": "goals endpoint reflects weight after observe call",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "F-03",
+      "description": "Server restart — goal weights still reflect previous observations",
+      "spec_file": "tests/test_persistence.py",
+      "test_title": "goal weights persist across server restart",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "F-04",
+      "description": "Multiple observations converge effective_weight toward behavior",
+      "spec_file": "tests/test_persistence.py",
+      "test_title": "repeated observations move effective_weight toward revealed behavior",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "F-05",
+      "description": "Contradiction score increases when stated high but behavior low",
+      "spec_file": "tests/test_weighting.py",
+      "test_title": "contradiction score rises with high stated low revealed divergence",
+      "assertion_type": "persisted_data"
+    },
+    {
+      "gate7_id": "G-01",
+      "description": "Docker image builds successfully",
+      "spec_file": "tests/test_deploy.py",
+      "test_title": "docker build exits 0",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "G-02",
+      "description": "Container starts and /health returns 200",
+      "spec_file": "tests/test_deploy.py",
+      "test_title": "containerized app health check returns 200",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "G-03",
+      "description": "Deploy to Coolify on Hetzner",
+      "spec_file": "tests/test_deploy.py",
+      "test_title": "coolify deployment succeeds",
+      "assertion_type": "api_response"
+    },
+    {
+      "gate7_id": "G-04",
+      "description": "External access at jeeves.agyemanenterprises.com",
+      "spec_file": "tests/test_deploy.py",
+      "test_title": "jeeves.agyemanenterprises.com /health returns 200",
+      "assertion_type": "api_response"
+    }
+  ]
+}

@@ -25,10 +25,6 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_service_role_key: str = ""
 
-    # ── JarvisCore Supabase (Aqui, Nexus, Jarvis data) ────────────────
-    jarviscore_supabase_url: str = ""
-    jarviscore_service_role_key: str = ""
-
     # ── LLM (thinking) ─────────────────────────────────────────────────
     litellm_base_url: str = "https://ai.agyemanenterprises.com"
     litellm_api_key: str = ""

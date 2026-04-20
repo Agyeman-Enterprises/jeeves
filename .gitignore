@@ -12,3 +12,12 @@ venv/
 data/
 *.log
 .claude/
+
+# OAuth credentials - never commit
+client_secret*.json
+
+# OAuth credentials - never commit
+client_secret*.json
+
+# OAuth credentials - never commit
+client_secret*.json

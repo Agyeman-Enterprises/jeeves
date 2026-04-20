@@ -13,8 +13,12 @@ import asyncio
 import logging
 
 from app.core.orchestrator import get_orchestrator
+from app.brain.mimograph import get_mimograph
+from app.brain.user_model import UserModel
 
 LOGGER = logging.getLogger(__name__)
+
+_brain_user_model = UserModel()
 
 
 async def run_nightly_reconciliation():
@@ -73,8 +77,17 @@ async def run_nightly_reconciliation():
     tomorrow_interventions = orch.interventions.decide_interventions(max_interventions=5)
     LOGGER.info("[Nightly] Tomorrow's interventions: %d", len(tomorrow_interventions))
 
-    LOGGER.info("[Nightly] 🌙 Nightly reconciliation complete. %d reflections, %d tomorrow interventions.",
-                len(reflections), len(tomorrow_interventions))
+    # 6. JJ Brain: decay goal weights + run reflection cycle
+    brain_reflections = []
+    try:
+        _brain_user_model.run_nightly_decay()
+        brain_reflections = get_mimograph().run_reflection_cycle()
+        LOGGER.info("[Nightly] Brain: %d reflections generated", len(brain_reflections))
+    except Exception as exc:
+        LOGGER.warning("[Nightly] Brain reflection cycle failed: %s", exc)
+
+    LOGGER.info("[Nightly] 🌙 Nightly reconciliation complete. %d reflections, %d brain reflections, %d tomorrow interventions.",
+                len(reflections), len(brain_reflections), len(tomorrow_interventions))
 
     return {
         "status": "complete",
@@ -83,6 +96,7 @@ async def run_nightly_reconciliation():
         "critical_contradictions": len(critical),
         "reflections_generated": len(reflections),
         "tomorrow_interventions": len(tomorrow_interventions),
+        "brain_reflections": len(brain_reflections),
     }
 
 
