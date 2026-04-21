@@ -47,7 +47,7 @@ _preload_agents()
 
 class AgentRequest(BaseModel):
     agent: str
-    task: str
+    task: str = ""
     context: Optional[Dict[str, Any]] = None
 
 

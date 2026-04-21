@@ -9,7 +9,7 @@ from typing import Dict, Any, List, Optional
 
 import httpx
 
-from app.config import NexusConfig
+from app.config import get_settings
 
 LOGGER = logging.getLogger(__name__)
 
@@ -26,9 +26,13 @@ class NexusService:
     """
 
     def __init__(self, base_url: Optional[str] = None, api_key: Optional[str] = None):
-        self.base_url = base_url or NexusConfig.BASE_URL
-        self.api_key = api_key or NexusConfig.API_KEY
-        self.headers = NexusConfig.get_headers()
+        s = get_settings()
+        self.base_url = base_url or s.nexus_base_url
+        self.api_key = api_key or s.nexus_internal_key
+        self.headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
         self.timeout = 30.0
 
     def _request(
