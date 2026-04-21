@@ -232,6 +232,21 @@ class Mimograph:
         LOGGER.info("[Brain] Reflection cycle: %d reflections", len(reflections))
         return reflections
 
+    # ── Proxy methods (used by compat router + external callers) ──────
+
+    def get_nodes(self, node_type: str = None) -> List[Dict]:
+        """Proxy to user_model.get_nodes() — returns belief nodes."""
+        return self.user_model.get_nodes(node_type=node_type)
+
+    def get_goals(self, limit: int = None) -> List[Dict]:
+        """Proxy to user_model.get_goals() with optional limit."""
+        goals = self.user_model.get_goals()
+        return goals[:limit] if limit is not None else goals
+
+    def get_profile_summary(self) -> Dict:
+        """Proxy to user_model.get_profile_summary()."""
+        return self.user_model.get_profile_summary()
+
     # ── Insight Report ─────────────────────────────────────────────────
 
     def get_insight_report(self) -> Dict:

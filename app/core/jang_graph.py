@@ -244,30 +244,31 @@ def reflect_node(state: JANGState) -> dict:
 
 def write_back_node(state: JANGState) -> dict:
     t0 = time.time()
-    mem = _get_mem0()
     importance = state.get("importance_score", 0.5)
 
-    if mem:
-        try:
-            conversation_summary = (
-                f"User: {state['user_input']}\n"
-                f"JJ: {state.get('agent_response', '')[:500]}"
-            )
-            mem.add(
-                conversation_summary,
-                metadata={
-                    "type": "conversation",
-                    "importance": importance,
-                    "session_id": state.get("session_id", ""),
-                },
-            )
-            for fact in state.get("new_facts", []):
-                if fact:
-                    mem.add(fact, metadata={"type": "fact", "importance": importance})
-        except Exception as exc:
-            LOGGER.error("[jang] mem0 write-back failed: %s", exc)
+    # Dual-write: Supabase Cloud (primary) → local mem0 (secondary, queued if down)
+    try:
+        from app.memory.sync_manager import get_sync_manager
+        mgr = get_sync_manager()
+        conversation_summary = (
+            f"User: {state['user_input']}\n"
+            f"JJ: {state.get('agent_response', '')[:500]}"
+        )
+        mgr.write_memory(
+            conversation_summary,
+            metadata={
+                "type": "conversation",
+                "importance": importance,
+                "session_id": state.get("session_id", ""),
+            },
+        )
+        for fact in state.get("new_facts", []):
+            if fact:
+                mgr.write_memory(fact, metadata={"type": "fact", "importance": importance})
+    except Exception as exc:
+        LOGGER.error("[jang] sync_manager write-back failed: %s", exc)
 
-    # Write to Aqui for high-importance turns
+    # Write to Aqui for high-importance turns (supplementary — non-critical path)
     if importance >= 0.6:
         try:
             _write_to_aqui(state)

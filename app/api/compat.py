@@ -276,7 +276,7 @@ async def personality_core():
     try:
         mim = get_mimograph()
         nodes = mim.get_nodes()
-        traits = [n for n in nodes if n.get("type") == "trait"]
+        traits = [n for n in nodes if n.get("node_type") == "trait"]
         goals = mim.get_goals(limit=5)
         return {
             "ok": True,

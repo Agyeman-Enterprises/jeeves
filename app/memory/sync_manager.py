@@ -14,19 +14,16 @@ When Docker comes back:
 
 Usage:
     mgr = get_sync_manager()
-    await mgr.write_memory(content, metadata)
-    await mgr.write_reflection(insight)
-    await mgr.write_preference(preference, context, outcome)
+    mgr.write_memory(content, metadata)
+    mgr.write_reflection(insight)
+    mgr.write_preference(preference, context, outcome)
 """
 from __future__ import annotations
 
 import logging
-import os
 from typing import Any
 
 LOGGER = logging.getLogger(__name__)
-
-_USER_ID = "akua"
 
 
 class SyncManager:

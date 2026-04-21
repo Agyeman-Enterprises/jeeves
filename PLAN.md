@@ -131,6 +131,63 @@ NOTE: All persistent state in JJ DB (tzjygaxpzrtevlnganjs). Aqui = external, add
 - Fix failures
 - Deploy via Coolify to port 4004
 
+### Phase 8 — v2.1.0: Frontend Migration + Dual-Write Sync Layer (APPROVED ADDENDUM)
+
+Owner instruction: "MIGRATE ALL — merge Jeeves and JARVIS. data written to both docker and
+supabase. if one is down, write to log and update without data loss when it comes back."
+
+#### 8a — Frontend Migration
+- COPY `C:\DEV\Jarvis\frontend\` → `C:\DEV\jeeves\frontend\`
+- REWRITE `frontend/app/api/jarvis/route.ts` → routes to JJ `/jang/chat` (port 4004)
+- REWRITE `frontend/app/api/jarvis/personal/route.ts` → reads `jeeves_events` + `jeeves_tasks`
+- REWRITE `frontend/app/api/jarvis/timeline/route.ts` → reads `jeeves_signals` via Supabase
+- REWRITE `frontend/app/api/jarvis/priorities/route.ts` → reads `/brain/goals` from JJ
+- EXTEND `frontend/app/api/proxy/[...path]/route.ts` → default URL port 4004, add DELETE/PATCH/PUT
+- UPDATE `frontend/.env.local` → `tzjygaxpzrtevlnganjs`, `localhost:4004`
+- UPDATE `frontend/.env.production` → `tzjygaxpzrtevlnganjs`, `jeeves.agyemanenterprises.com`
+- CREATE `frontend/Dockerfile` — Next.js container with build args for JJ Supabase + backend URL
+
+#### 8b — Compat Router
+- CREATE `app/api/compat.py` — maps old JARVIS frontend paths to JJ equivalents:
+  /agents/status, /api/empire/status, /api/empire/portfolio, /api/knowledge/stats,
+  /api/knowledge/search, /api/graph/entities, /api/jobs (full CRUD on jeeves_tasks),
+  /briefing/today, /api/personality/core, /query→/jang/chat, /api/system/status
+- MODIFY `app/main.py` — register compat_router
+
+#### 8c — Dual-Write Sync Layer
+- CREATE `app/memory/sync_manager.py` — SyncManager class:
+  Cloud (Supabase tzjygaxpzrtevlnganjs) = primary authority, always written first.
+  Local (mem0/Qdrant) = secondary replica. On local failure: queue in jj_sync_queue.
+  Methods: write_memory(), write_reflection(), write_preference(), log_agent_run(),
+  log_action(), emit_signal(), search_memory()
+- CREATE `app/jobs/sync_recovery.py` — drains jj_sync_queue when Docker returns.
+  Runs at startup + every 15min via APScheduler.
+- MODIFY `app/main.py` — register sync_recovery in APScheduler
+- MODIFY `app/core/jang_graph.py` — wire write_back_node to use get_sync_manager()
+  instead of calling mem.add() directly. All conversation memory goes through
+  dual-write layer.
+
+#### 8d — New Supabase Tables (tzjygaxpzrtevlnganjs)
+Six tables required for v2.1.0:
+  - jeeves_agent_runs — agent execution log
+  - jeeves_action_logs — dispatched action log
+  - jeeves_tasks — task CRUD (exposed via /api/jobs)
+  - jeeves_journal_entries — journal store
+  - jeeves_signals — timeline events + dual-write primary store for memory
+  - jj_sync_queue — pending local writes when Docker is down
+
+Migration file: supabase/migrations/001_jj_v210_tables.sql
+
+#### 8e — Dependency updates
+- ADD to requirements.txt: pytest>=8.0.0, pytest-asyncio>=0.23.0 (test framework)
+- All other deps (anthropic, langgraph, mem0ai) already in requirements.txt
+
+#### 8f — Tests
+- CREATE `tests/__init__.py`
+- CREATE `tests/test_sync_manager.py` — cloud write succeeds, local failure queues,
+  search_memory falls back to cloud
+- CREATE `tests/test_sync_recovery.py` — pending queue item drained and marked synced
+
 ---
 
 ## 4. What I Will NOT Touch
@@ -143,7 +200,7 @@ NOTE: All persistent state in JJ DB (tzjygaxpzrtevlnganjs). Aqui = external, add
 - `app/integrations/` — all 4 clients working
 - `app/db.py` — correct design, no changes
 - `Dockerfile` — port 4004 correct, no changes
-- JARVIS Next.js frontend — not in scope, stays as-is pointing at JJ API
+- JARVIS Next.js frontend — MIGRATED to jeeves/frontend/ in Phase 8a (owner order: merge all)
 - JarvisCore/FormPilot Supabase (rcyekqufeautozmiljoq) — not touched
 - Aqui pgvector (Hetzner) — not touched, only adding fallback around it
 - Any other project in C:\DEV — this plan is Jeeves-only scope
