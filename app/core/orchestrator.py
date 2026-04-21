@@ -164,7 +164,11 @@ Under 100 words. Trusted colleague tone, not therapist."""
         ghexit_ok = await self.ghexit.health()
         google_ok = await self.google.health()
         goals = self.weighting.get_goals()
+        from app.memory.sync_manager import get_sync_manager
+        mgr = get_sync_manager()
         return {"status": "alive", "version": get_settings().version,
+                "cloud_available": mgr.cloud_available(),
+                "local_available": mgr.local_available(),
                 "services": {"aqui": "ok" if aqui_ok else "down",
                              "nexus": "ok" if nexus_ok else "down",
                              "ghexit": "ok" if ghexit_ok else "down",

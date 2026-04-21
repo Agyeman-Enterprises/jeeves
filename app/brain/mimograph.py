@@ -160,6 +160,20 @@ class Mimograph:
                 "priority": 5,
             })
 
+        # Fallback: if no condition-driven questions were generated, always return
+        # at least one goal-progress check from the top priority goal.
+        if not questions and goals:
+            top_goal = goals[0]
+            questions.append({
+                "question": (
+                    f"What's your progress on '{top_goal.get('label', top_goal.get('name', 'your top goal'))}'? "
+                    "Any blockers or updates today?"
+                ),
+                "question_type": "goal_check",
+                "related_goal": top_goal.get("goal_id"),
+                "priority": 5,
+            })
+
         self._store_questions(questions[:max_questions])
         return questions[:max_questions]
 
