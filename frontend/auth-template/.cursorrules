@@ -1,0 +1,51 @@
+# Auth Template - Cursor Rules (AUTO-LOADED)
+
+## CRITICAL CONSTRAINTS
+
+### Authentication Provider
+- USE Supabase Auth ONLY
+- NEVER use NextAuth, Firebase, Auth0, Clerk, or custom JWT
+- NEVER implement your own session management
+
+### File Locations (DO NOT CREATE ALTERNATIVES)
+- Browser client: `@/auth-template/lib/supabase/client.ts`
+- Server client: `@/auth-template/lib/supabase/server.ts`
+- Admin client: `@/auth-template/lib/supabase/admin.ts`
+- Auth hook: `@/auth-template/hooks/useAuth.ts`
+- Components: `@/auth-template/components/*`
+
+### Code Patterns (ALWAYS FOLLOW)
+
+Server-side auth check:
+```typescript
+import { createClient } from '@/auth-template/lib/supabase/server';
+
+const supabase = await createClient();
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+```
+
+Client-side auth:
+```typescript
+import { useAuth } from '@/auth-template/hooks/useAuth';
+
+const { user, profile, signOut } = useAuth();
+```
+
+### FORBIDDEN PATTERNS
+- localStorage for tokens (Supabase handles this)
+- Custom JWT signing/verification
+- Storing access_token in React state
+- Creating new Supabase client instances outside lib/supabase/
+- Skipping profile fetch after auth check
+- Exposing detailed error messages to users
+
+### Role System
+- Define roles in `@/auth-template/utils/roles.ts`
+- Use `hasRole()` helper for checks
+- NEVER hardcode role strings in components
+
+### TypeScript
+- Next.js 15 params: `context: { params: Promise<{id: string}> }`
+- Destructure with await: `const { id } = await context.params;`
+- process.env: Use `process.env['VAR_NAME']` bracket notation

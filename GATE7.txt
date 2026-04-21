@@ -12,39 +12,39 @@ Every check below must PASS before JJ can be called done.
 SECTION A: HEALTH + CORE API ENDPOINTS
 ===================================================================
 
-  [ ] GET /health → status=alive, services dict, brain stats (goals_tracked, nodes)
-  [ ] GET /brain/status → goals_tracked=14, belief_nodes=17, events_last_7d
-  [ ] GET /brain/goals → returns 14 goals ranked by effective_weight
-  [ ] GET /brain/contradictions → returns contradiction list with severity
-  [ ] GET /brain/retirement → days_left, monthly_needed ($83,333/mo)
-  [ ] GET /brain/profile → full profile summary (top goals + traits + contradictions)
-  [ ] GET /brain/nodes → returns 17 belief nodes
-  [ ] GET /brain/traits → returns nodes filtered to type=trait
-  [ ] GET /brain/briefing → generates morning briefing (text + goals + questions)
-  [ ] GET /brain/questions → returns 3 targeted daily check-in questions
-  [ ] POST /brain/answer → records answer, returns insight
-  [ ] POST /brain/reflect → runs reflection cycle, returns reflection list
-  [ ] GET /brain/insights → full intelligence report
-  [ ] POST /brain/observe → records behavioral observation, updates goal weight
+  [ ] /health → status=alive, services dict, brain stats (goals_tracked, nodes)
+  [ ] /brain/status → goals_tracked=14, belief_nodes=17, events_last_7d
+  [ ] /brain/goals → returns 14 goals ranked by effective_weight
+  [ ] /brain/contradictions → returns contradiction list with severity
+  [ ] /brain/retirement → days_left, monthly_needed ($83,333/mo)
+  [ ] /brain/profile → full profile summary (top goals + traits + contradictions)
+  [ ] /brain/nodes → returns 17 belief nodes
+  [ ] /brain/traits → returns nodes filtered to type=trait
+  [ ] /brain/briefing → generates morning briefing (text + goals + questions)
+  [ ] /brain/questions → returns 3 targeted daily check-in questions
+  [ ] /brain/answer → records answer, returns insight
+  [ ] /brain/reflect → runs reflection cycle, returns reflection list
+  [ ] /brain/insights → full intelligence report
+  [ ] /brain/observe → records behavioral observation, updates goal weight
 
 ===================================================================
 SECTION B: JANG GRAPH (LANGGRAPH EXECUTION)
 ===================================================================
 
-  [ ] GET /jang/status → graph_compiled=true (or false with graceful fallback)
-  [ ] POST /jang/chat {"message": "..."} → returns response with sources_used
-  [ ] POST /jang/chat → memory_context populated from mem0 when Aqui is down
-  [ ] POST /jang/chat → response under 150 words (butler tone, not wall of text)
-  [ ] POST /jang/chat high-importance message → importance_score >= 0.8
-  [ ] POST /jang/chat after 10 turns → reflection generated (should_reflect=true)
+  [ ] /jang/status → graph_compiled=true (or false with graceful fallback)
+  [ ] /jang/chat {"message": "..."} → returns response with sources_used
+  [ ] /jang/chat → memory_context populated from mem0 when Aqui is down
+  [ ] /jang/chat → response under 150 words (butler tone, not wall of text)
+  [ ] /jang/chat high-importance message → importance_score >= 0.8
+  [ ] /jang/chat after 10 turns → reflection generated (should_reflect=true)
   [ ] JANG fallback: langgraph not installed → direct Claude response returned, no crash
 
 ===================================================================
 SECTION C: AGENTS + EMPIRE DISPATCH
 ===================================================================
 
-  [ ] GET /empire/agents → returns list of available agents (>= 30)
-  [ ] POST /empire/dispatch {"agent": "nonexistent"} → 404 (not 500)
+  [ ] /empire/agents → returns list of available agents (>= 30)
+  [ ] /empire/dispatch {"agent": "nonexistent"} → 404 (not 500)
   [ ] Agent preloader at startup: no crash even if Phase 5 services missing
   [ ] app/agents/base.py imports cleanly (no backend.* references)
   [ ] All 37+ agent files have app.* imports (verify: grep -r "from backend" app/agents/ = 0 results)
@@ -53,20 +53,20 @@ SECTION C: AGENTS + EMPIRE DISPATCH
 SECTION D: MEMORY RESILIENCE (AQUI + MEM0 FALLBACK)
 ===================================================================
 
-  [ ] GET /jang/status → mem0_available=true (if mem0ai installed)
+  [ ] /jang/status → mem0_available=true (if mem0ai installed)
   [ ] mem0 search with Aqui down → returns results from local vector store
   [ ] aqui_client.search() with Aqui unreachable → falls back to mem0 (not empty list)
   [ ] aqui_client.write_reflection() with Aqui down → writes to mem0 instead
-  [ ] POST /jang/chat → write_back_node persists conversation to mem0
+  [ ] /jang/chat → write_back_node persists conversation to mem0
   [ ] mem0 data dir exists at JJ_MEM0_DIR or C:/DEV/jeeves/data/mem0
 
 ===================================================================
 SECTION E: WEIGHTING ENGINE + BRAIN (JJ SUPABASE)
 ===================================================================
 
-  [ ] POST /brain/observe → observation recorded in jeeves_events table
-  [ ] POST /brain/observe with related_goal → jeeves_goals.effective_weight updated
-  [ ] GET /brain/goals after observation → reflects updated weight in Supabase
+  [ ] /brain/observe → observation recorded in jeeves_events table
+  [ ] /brain/observe with related_goal → jeeves_goals.effective_weight updated
+  [ ] /brain/goals after observation → reflects updated weight in Supabase
   [ ] Server restart → goal weights still reflect previous observations (Supabase persistence)
   [ ] Contradiction score: stated_weight high, action_count low → score > 0.2
   [ ] Nightly decay: run_nightly_decay() → revealed_weight decreases for inactive goals
@@ -76,11 +76,11 @@ SECTION E: WEIGHTING ENGINE + BRAIN (JJ SUPABASE)
 SECTION F: CONTEXT ASSEMBLER + CHAT
 ===================================================================
 
-  [ ] POST /chat → returns real LLM response (not empty)
-  [ ] POST /chat → context includes identity block (WHO AAA IS section)
-  [ ] POST /chat → context includes current priorities (top 5 goals)
-  [ ] POST /chat → Aqui/mem0 memory results injected when query matches past context
-  [ ] POST /chat → response under 150 words for simple queries (butler tone)
+  [ ] /chat → returns real LLM response (not empty)
+  [ ] /chat → context includes identity block (WHO AAA IS section)
+  [ ] /chat → context includes current priorities (top 5 goals)
+  [ ] /chat → Aqui/mem0 memory results injected when query matches past context
+  [ ] /chat → response under 150 words for simple queries (butler tone)
 
 ===================================================================
 SECTION G: DAILY CYCLES (SCHEDULER)
@@ -109,11 +109,45 @@ SECTION H: DEPLOYMENT (DOCKER + COOLIFY)
 SECTION I: THE MANDATORY PERSISTENCE TEST
 ===================================================================
 
-  [ ] POST /brain/observe → records event in jeeves_events
-  [ ] GET /brain/goals → shows updated effective_weight
+  [ ] /brain/observe → records event in jeeves_events
+  [ ] /brain/goals → shows updated effective_weight
   [ ] Restart server → weights unchanged (Supabase, not in-memory)
-  [ ] POST /jang/chat → conversation written to mem0 (check data/mem0 dir grows)
-  [ ] POST /jang/chat 10 times → reflection generated at turn 10
+  [ ] /jang/chat → conversation written to mem0 (check data/mem0 dir grows)
+  [ ] /jang/chat 10 times → reflection generated at turn 10
+
+===================================================================
+SECTION J: FRONTEND (NEXT.JS — jeeves/frontend)
+===================================================================
+
+  [ ] npm run dev → starts on port 3000, zero console errors
+  [ ] / → redirects to /jarvis/home
+  [ ] /jarvis/home → loads, displays priorities from /brain/goals
+  [ ] /jarvis/home → personal panel shows tasks from jeeves_tasks
+  [ ] /jarvis/home → timeline panel shows signals from jeeves_signals
+  [ ] /jarvis/console → chat input sends to /api/jarvis → /jang/chat → real response
+  [ ] /jarvis/agents → lists 30+ agents from /agents/status
+  [ ] /jarvis/briefing → loads today's briefing from /briefing/today
+  [ ] /jarvis/jobs → lists tasks from /api/jobs (jeeves_tasks in Supabase Cloud)
+  [ ] /jarvis/jobs → create task → appears in list → persists on refresh
+  [ ] /jarvis/jobs → delete task → removed from list
+  [ ] /jarvis/memory → loads without 500 error
+  [ ] Supabase client points at tzjygaxpzrtevlnganjs (not rzkjononziijzgrnexvg)
+  [ ] /api/proxy/* → all proxied requests include JJ_API_KEY Bearer header
+  [ ] docker build frontend/ → exits 0
+  [ ] Frontend container deployed to Coolify at port 3000
+
+===================================================================
+SECTION K: DUAL-WRITE RESILIENCE
+===================================================================
+
+  [ ] /jang/chat → conversation written to jeeves_signals (Supabase Cloud, primary)
+  [ ] /jang/chat → conversation also written to local mem0 when Docker is up
+  [ ] Simulate Docker down: /jang/chat → write succeeds (cloud), local write queued in jj_sync_queue
+  [ ] jj_sync_queue table in Supabase → pending row created when local write fails
+  [ ] Docker comes back: sync_recovery job runs → jj_sync_queue row marked synced
+  [ ] sync_recovery runs at startup + every 15 min (APScheduler job registered)
+  [ ] /health → shows cloud_available=true even when local mem0 is down
+  [ ] Cloud read (jeeves_signals text search) used as fallback when local mem0 down
 
 ===================================================================
 WHAT CLAUDE IS NOT ALLOWED TO SUBSTITUTE FOR THIS TEST

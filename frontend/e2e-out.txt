@@ -1,0 +1,198 @@
+[2m[WebServer] [22m[33m[1m⚠[22m[39m Warning: Next.js inferred your workspace root, but it may not be correct.
+[2m[WebServer] [22m We detected multiple lockfiles and selected the directory of C:\DEV\JARVIS\package-lock.json as the root directory.
+[2m[WebServer] [22m To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+[2m[WebServer] [22m   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+[2m[WebServer] [22m Detected additional lockfiles: 
+[2m[WebServer] [22m   * C:\DEV\JARVIS\frontend\package-lock.json
+[2m[WebServer] [22m
+[2m[WebServer] [22m[33m[1m⚠[22m[39m The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+Running 30 tests using 9 workers
+
+  ok  2 [chromium] › e2e\specs\01.auth.spec.ts:7:1 › home page loads without auth (3.1s)
+  ok  3 [chromium] › e2e\specs\00.smoke.spec.ts:4:1 › app loads from root (3.2s)
+  ok  6 [chromium] › e2e\specs\07.checkout.spec.ts:5:1 › no billing route crashes the app (3.1s)
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+  ok 11 [chromium] › e2e\specs\00.smoke.spec.ts:9:1 › root redirects to /jarvis/home (777ms)
+  ok  5 [chromium] › e2e\specs\08.console.spec.ts:4:1 › no uncaught JS errors on home load (4.1s)
+  ok  8 [chromium] › e2e\specs\04.forms.spec.ts:4:1 › jarvis home has an input or interactive element (4.1s)
+  ok  7 [chromium] › e2e\specs\02.dashboard.spec.ts:4:1 › jarvis home renders (4.1s)
+  ok  9 [chromium] › e2e\specs\06.permissions.spec.ts:17:3 › /jarvis/home is accessible without credentials (4.1s)
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+  ok 10 [chromium] › e2e\specs\01.auth.spec.ts:12:1 › finance page loads without auth (1.3s)
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+  ok  4 [chromium] › e2e\specs\05.session.spec.ts:6:1 › page state survives reload on home (4.4s)
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+  ok 12 [chromium] › e2e\specs\00.smoke.spec.ts:14:1 › home page renders content (1.1s)
+  ok 16 [chromium] › e2e\specs\06.permissions.spec.ts:17:3 › /finance is accessible without credentials (956ms)
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+  ok 13 [chromium] › e2e\specs\08.console.spec.ts:12:1 › no failed network requests on home load (1.3s)
+  ok 19 [chromium] › e2e\specs\00.smoke.spec.ts:21:1 › page does not show application crash error (430ms)
+  ok 18 [chromium] › e2e\specs\05.session.spec.ts:13:1 › page state survives reload on finance (1.1s)
+  ok 17 [chromium] › e2e\specs\01.auth.spec.ts:18:1 › nexus page loads without auth (1.2s)
+  ok 15 [chromium] › e2e\specs\02.dashboard.spec.ts:11:1 › jarvis console page loads (1.5s)
+  ok 14 [chromium] › e2e\specs\04.forms.spec.ts:14:1 › console page has input for commands (1.5s)
+[2m[WebServer] [22m[Timeline] error: {
+[2m[WebServer] [22m  message: [32m'TypeError: fetch failed'[39m,
+[2m[WebServer] [22m  details: [32m'TypeError: fetch failed\n'[39m +
+[2m[WebServer] [22m    [32m'\n'[39m +
+[2m[WebServer] [22m    [32m'Caused by: Error: getaddrinfo ENOTFOUND placeholder.supabase.co (ENOTFOUND)\n'[39m +
+[2m[WebServer] [22m    [32m'Error: getaddrinfo ENOTFOUND placeholder.supabase.co\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)\n'[39m +
+[2m[WebServer] [22m    [32m'    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)'[39m,
+[2m[WebServer] [22m  hint: [32m''[39m,
+[2m[WebServer] [22m  code: [32m''[39m
+[2m[WebServer] [22m}
+  ok  1 [chromium] › e2e\specs\03.crud.spec.ts:7:1 › adai campaigns page loads (6.0s)
+  ok 21 [chromium] › e2e\specs\08.console.spec.ts:26:1 › no 500 responses on any primary page (1.1s)
+  ok 23 [chromium] › e2e\specs\02.dashboard.spec.ts:17:1 › playground page loads (1.1s)
+  ok 24 [chromium] › e2e\specs\03.crud.spec.ts:14:1 › adai connections page loads (1.0s)
+  ok 25 [chromium] › e2e\specs\02.dashboard.spec.ts:23:1 › creative page loads (954ms)
+  ok 26 [chromium] › e2e\specs\03.crud.spec.ts:21:1 › nexus situations page loads (971ms)
+  ok 27 [chromium] › e2e\specs\02.dashboard.spec.ts:29:1 › finance page renders content (763ms)
+  ok 20 [chromium] › e2e\specs\06.permissions.spec.ts:17:3 › /adai is accessible without credentials (3.7s)
+  ok 22 [chromium] › e2e\specs\01.auth.spec.ts:24:1 › adai page loads without auth (3.3s)
+  ok 28 [chromium] › e2e\specs\06.permissions.spec.ts:17:3 › /nexus is accessible without credentials (764ms)
+  ok 29 [chromium] › e2e\specs\06.permissions.spec.ts:17:3 › /creative is accessible without credentials (778ms)
+  ok 30 [chromium] › e2e\specs\06.permissions.spec.ts:17:3 › /playground is accessible without credentials (753ms)
+
+  30 passed (14.7s)
+EXIT_CODE=0 

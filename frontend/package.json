@@ -1,0 +1,50 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "Next.js 14 + TypeScript frontend for the JARVIS AI Life Management System.",
+  "main": "index.js",
+  "scripts": {
+    "clean-port": "node scripts/clean-port.cjs",
+    "predev": "npm run clean-port",
+    "dev": "next dev -p 3000 --webpack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "check-deps": "ts-node ../scripts/setup/check_dependencies.ts",
+    "setup-phase10": "npm install @nut-tree-fork/nut-js && npm run check-deps",
+    "e2e": "playwright test -c e2e/playwright.config.ts",
+    "e2e:ui": "playwright test -c e2e/playwright.config.ts --ui",
+    "e2e:headed": "playwright test -c e2e/playwright.config.ts --headed",
+    "e2e:report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.86.0",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.22",
+    "class-variance-authority": "^0.7.0",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.0.7",
+    "lucide-react": "^0.575.0",
+    "next": "^16.0.7",
+    "openai": "^6.22.0",
+    "postcss": "^8.5.6",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "resend": "^6.8.0",
+    "tailwindcss": "^3.4.18",
+    "typescript": "^5.9.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "dotenv": "^17.3.1",
+    "wait-on": "^8.0.5"
+  }
+}

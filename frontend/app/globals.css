@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+  }
+}
+
+body {
+  @apply bg-slate-950 text-slate-100;
+}
+
+/* Jarvis-specific styles */
+.jarvis-card {
+  @apply bg-gradient-to-br from-purple-950/40 via-indigo-950/30 to-slate-950/40;
+  @apply border-purple-800/50;
+  @apply backdrop-blur-sm;
+}
+
+.jarvis-glow-hover {
+  @apply transition-all duration-200;
+}
+
+.jarvis-glow-hover:hover {
+  @apply shadow-lg shadow-yellow-400/50;
+}
+
+/* Voice Panel Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Custom Scrollbar for Webkit browsers (Chrome, Safari, Edge) */
+.voice-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.voice-scroll::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 3px;
+}
+
+.voice-scroll::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+.voice-scroll::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Ensure consistent text sizing in voice messages */
+.voice-message-text {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.5;
+}

@@ -364,7 +364,7 @@ def get_jang_graph():
     return _jang_graph
 
 
-def jang_invoke(
+async def jang_invoke(
     user_input: str,
     session_id: str | None = None,
     interaction_count: int = 0,

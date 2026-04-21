@@ -22,6 +22,7 @@ from starlette.responses import JSONResponse
 
 from app.api.brain import router as brain_router
 from app.api.chat import router as chat_router
+from app.api.compat import router as compat_router
 from app.api.empire import router as empire_router
 from app.api.jang import router as jang_router
 from app.api.ingest import router as ingest_router
@@ -48,6 +49,11 @@ def _start_scheduler():
     s = get_settings()
     tz = ZoneInfo(s.timezone)
     _scheduler = BackgroundScheduler(timezone=tz)
+
+    # Startup + every 15 min: drain sync queue (cloud→local recovery when Docker returns)
+    from app.jobs.sync_recovery import run_sync_recovery
+    _scheduler.add_job(run_sync_recovery, "interval", minutes=15, id="sync_recovery")
+    _scheduler.add_job(run_sync_recovery, "date", id="sync_recovery_startup")  # run once at boot
 
     # 6am: Repo audit
     _scheduler.add_job(run_repo_audit_sync, "cron", hour=6, minute=0, id="repo_audit")
@@ -116,6 +122,7 @@ app.add_middleware(CORSMiddleware,
 # ── Routes ─────────────────────────────────────────────────────────────
 app.include_router(brain_router)
 app.include_router(chat_router)
+app.include_router(compat_router)
 app.include_router(empire_router)
 app.include_router(jang_router)
 app.include_router(ingest_router)

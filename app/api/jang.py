@@ -19,7 +19,7 @@ class ChatRequest(BaseModel):
 @router.post("/chat")
 async def jang_chat(req: ChatRequest):
     """Send a message through the JANG LangGraph pipeline."""
-    result = jang_invoke(
+    result = await jang_invoke(
         user_input=req.message,
         session_id=req.session_id,
         interaction_count=req.interaction_count,
