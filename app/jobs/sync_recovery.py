@@ -100,7 +100,7 @@ def run_sync_recovery() -> dict:
                 supabase.table("jj_sync_queue").update({
                     "attempts": attempts + 1,
                     "status": new_status,
-                    "error": str(exc),
+                    "last_error": str(exc),
                 }).eq("id", item_id).execute()
             except Exception:
                 pass
