@@ -78,3 +78,24 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings() -> Settings:
     return Settings()
+
+
+class NexusConfig:
+    """Static config for Nexus service — reads from Settings at call time."""
+
+    @classmethod
+    @property
+    def BASE_URL(cls) -> str:
+        return get_settings().nexus_base_url
+
+    @classmethod
+    @property
+    def API_KEY(cls) -> str:
+        return get_settings().nexus_internal_key
+
+    @staticmethod
+    def get_headers() -> dict:
+        return {
+            "Authorization": f"Bearer {get_settings().nexus_internal_key}",
+            "Content-Type": "application/json",
+        }

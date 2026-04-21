@@ -11,13 +11,18 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 from app.agents.base import AgentResponse, BaseAgent
-from app.finance.fie_core import FinancialIntelligenceEngine, Transaction as FIETransaction
-from app.finance.fie_autobudget import AutoBudgetEngine
-from app.finance.fie_autopay import AutopayPlanner, Bill, Payday
-from app.services.plaid_service import PlaidService
-from app.services.stripe_service import StripeService
-from app.services.square_service import SquareService
-from app.services.subscription_detector import SubscriptionDetector, Subscription
+
+try:
+    from app.finance.fie_core import FinancialIntelligenceEngine, Transaction as FIETransaction
+    from app.finance.fie_autobudget import AutoBudgetEngine
+    from app.finance.fie_autopay import AutopayPlanner, Bill, Payday
+    from app.services.plaid_service import PlaidService
+    from app.services.stripe_service import StripeService
+    from app.services.square_service import SquareService
+    from app.services.subscription_detector import SubscriptionDetector, Subscription
+    _FINANCE_AVAILABLE = True
+except ImportError:
+    _FINANCE_AVAILABLE = False
 
 LOGGER = logging.getLogger(__name__)
 
