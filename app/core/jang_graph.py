@@ -181,6 +181,8 @@ def score_importance_node(state: JANGState) -> dict:
     high_signals = [
         "prefer", "always", "never", "decide", "plan", "goal",
         "important", "remember", "from now on", "i like", "i don't like",
+        "critical", "urgent", "emergency", "immediately", "seized", "irs",
+        "debt", "due now", "passport", "blocked", "crisis", "help me",
     ]
     if any(sig in text for sig in high_signals):
         importance = 0.85
@@ -401,7 +403,7 @@ async def jang_invoke(
         return {
             "response": response,
             "sources_used": ["claude_direct"],
-            "importance": 0.5,
+            "importance_score": 0.5,
             "reflection": None,
             "latency_ms": {},
             "fallback": True,
@@ -412,7 +414,7 @@ async def jang_invoke(
         return {
             "response": final_state.get("agent_response", ""),
             "sources_used": final_state.get("sources_used", []),
-            "importance": final_state.get("importance_score", 0.5),
+            "importance_score": final_state.get("importance_score", 0.5),
             "reflection": final_state.get("reflection"),
             "latency_ms": final_state.get("latency_ms", {}),
             "interaction_count": final_state.get("interaction_count", 0),
@@ -424,7 +426,7 @@ async def jang_invoke(
         return {
             "response": response,
             "sources_used": ["claude_fallback"],
-            "importance": 0.5,
+            "importance_score": 0.5,
             "reflection": None,
             "latency_ms": {},
             "error": str(exc),
