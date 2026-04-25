@@ -23,9 +23,14 @@ _brain_user_model = UserModel()
 
 async def run_nightly_reconciliation():
     """Execute the nightly sleep cycle."""
-    LOGGER.info("[Nightly] 🌙 Starting nightly reconciliation...")
-    orch = get_orchestrator()
+    LOGGER.info("[Nightly] Starting nightly reconciliation...")
+    try:
+        orch = get_orchestrator()
+    except Exception as exc:
+        LOGGER.error("[Nightly] Orchestrator unavailable: %s", exc)
+        return {"status": "error", "error": f"Orchestrator unavailable: {exc}"}
 
+    update_result: dict = {}
     # 1. Run full weight update with decay
     try:
         update_result = orch.weighting.run_nightly_update()

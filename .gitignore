@@ -21,3 +21,10 @@ client_secret*.json
 
 # OAuth credentials - never commit
 client_secret*.json
+
+# AE Scope Guard — OO approval state (local only)
+.claude/OO_APPROVED.json
+.claude/OO_COMPLETE.json
+.claude/OO_PENDING.json
+.claude/OO_VIOLATION.json
+.claude/VIOLATIONS.log
