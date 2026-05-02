@@ -1,163 +1,112 @@
+"""
+Wake-word detection for Jeeves — BYOV (Bring Your Own Voice) edition.
+
+Replaces the old Porcupine-based engine with the on-device MFCC + DTW engine
+from app.services.wake_word_byov. No API key. Works offline. Trains on your voice.
+
+Module-level interface (unchanged):
+    from app.services.wakeword import wakeword_engine
+    wakeword_engine.start_listening(callback)  -> bool
+    wakeword_engine.stop_listening()           -> None
+"""
+
 from __future__ import annotations
 
 import logging
 import os
-import threading
-from pathlib import Path
-from typing import Callable, Optional
+from collections.abc import Callable
 
-try:
-    import pvporcupine
-    import pyaudio
-except ImportError:
-    pvporcupine = None  # type: ignore[assignment, misc]
-    pyaudio = None  # type: ignore[assignment, misc]
-
-LOGGER = logging.getLogger(__name__)
-
-WAKE_WORD_MODEL_PATH = os.getenv("WAKE_WORD_MODEL_PATH", "data/porcupine/jarvis.ppn")
-WAKE_WORD_KEYWORD = os.getenv("WAKE_WORD", "jarvis").lower()
+LOGGER    = logging.getLogger(__name__)
+_AGENT_ID = os.getenv("WAKE_WORD_AGENT_ID", "jeeves")
 
 
 class WakeWordEngine:
     """
-    Local wake-word detection using Porcupine.
-    Listens continuously for the wake word and triggers a callback when detected.
+    Adapter over WakeWordService with the legacy start_listening / stop_listening
+    interface used by Jeeves startup and wake_word_listener.py.
     """
 
-    def __init__(self, keyword: str = WAKE_WORD_KEYWORD, model_path: Optional[str] = None) -> None:
-        if not pvporcupine or not pyaudio:
-            LOGGER.warning("pvporcupine or pyaudio not installed. Wake-word detection disabled.")
-            self.engine = None
-            self.is_listening = False
-            return
-
-        self.keyword = keyword
-        self.model_path = model_path or WAKE_WORD_MODEL_PATH
-        self.engine = None
+    def __init__(self, agent_id: str = _AGENT_ID) -> None:
+        self._agent_id    = agent_id
+        self._service     = None
         self.is_listening = False
-        self._thread: Optional[threading.Thread] = None
-        self._pa: Optional[pyaudio.PyAudio] = None
-        self._stream: Optional[pyaudio.Stream] = None
+        self._available   = False
+        self._WakeWordService = None
 
         try:
-            # Try to load custom model file if it exists
-            if Path(self.model_path).exists():
-                LOGGER.info("Loading custom Porcupine model from: %s", self.model_path)
-                self.engine = pvporcupine.create(keyword_paths=[self.model_path])
-            else:
-                # Use built-in keyword (requires Porcupine access key)
-                access_key = os.getenv("PORCUPINE_ACCESS_KEY")
-                if access_key:
-                    LOGGER.info("Using built-in Porcupine keyword: %s", keyword)
-                    self.engine = pvporcupine.create(access_key=access_key, keywords=[keyword])
-                else:
-                    LOGGER.warning(
-                        "Porcupine access key not set (PORCUPINE_ACCESS_KEY). "
-                        "Wake-word detection disabled. Get a free key at: https://console.picovoice.ai/"
-                    )
-        except Exception as exc:  # noqa: BLE001
-            LOGGER.exception("Failed to initialize Porcupine engine: %s", exc)
-            self.engine = None
+            from app.services.wake_word_byov import WakeWordService, WakeWordStore
+            self._WakeWordService = WakeWordService
+            self._store           = WakeWordStore(agent_id)
+            self._available       = True
+        except Exception as exc:
+            LOGGER.warning(
+                "BYOV wake-word module unavailable "
+                "(missing numpy/scipy/sounddevice?): %s", exc
+            )
 
     def start_listening(self, callback: Callable[[], None]) -> bool:
         """
-        Start listening for the wake word in a background thread.
-        Returns True if listening started successfully.
+        Load the trained template and begin background detection.
+        Returns True if started, False if no template exists or module unavailable.
+        Train: python -m app.services.wake_word_byov.train_cli
         """
-        if not self.engine:
-            LOGGER.error("Wake-word engine not initialized")
+        if not self._available:
+            LOGGER.warning("BYOV module not available — wake-word disabled")
+            return False
+
+        if not self._store.exists():
+            LOGGER.info(
+                "No wake-word template for agent_id='%s'. "
+                "Train: python -m app.services.wake_word_byov.train_cli "
+                "--agent-id %s",
+                self._agent_id, self._agent_id,
+            )
             return False
 
         if self.is_listening:
             LOGGER.warning("Wake-word listener already running")
             return False
 
-        self.is_listening = True
-        self._thread = threading.Thread(
-            target=self._listen_loop,
-            args=(callback,),
-            daemon=True,
-            name="WakeWordListener",
-        )
-        self._thread.start()
-        LOGGER.info("Wake-word listener started (keyword: %s)", self.keyword)
-        return True
+        try:
+            device = _parse_device_env()
+            svc = self._WakeWordService(
+                callback=callback,
+                agent_id=self._agent_id,
+                device=device,
+            )
+            svc.start()
+            self._service     = svc
+            self.is_listening = True
+            LOGGER.info("BYOV wake-word listening started (agent_id=%s)", self._agent_id)
+            return True
+        except Exception as exc:
+            LOGGER.exception("Failed to start BYOV wake-word service: %s", exc)
+            return False
 
     def stop_listening(self) -> None:
-        """Stop the wake-word listener."""
-        if not self.is_listening:
+        if not self.is_listening or self._service is None:
             return
-
-        self.is_listening = False
-        if self._stream:
-            try:
-                self._stream.stop_stream()
-                self._stream.close()
-            except Exception:
-                pass
-            self._stream = None
-
-        if self._pa:
-            try:
-                self._pa.terminate()
-            except Exception:
-                pass
-            self._pa = None
-
-        if self._thread:
-            self._thread.join(timeout=2.0)
-
-        LOGGER.info("Wake-word listener stopped")
-
-    def _listen_loop(self, callback: Callable[[], None]) -> None:
-        """Internal loop that processes audio and detects wake words."""
-        if not self.engine:
-            return
-
         try:
-            self._pa = pyaudio.PyAudio()
-            sample_rate = self.engine.sample_rate
-            frame_length = self.engine.frame_length
-
-            self._stream = self._pa.open(
-                rate=sample_rate,
-                channels=1,
-                format=pyaudio.paInt16,
-                input=True,
-                frames_per_buffer=frame_length,
-            )
-
-            LOGGER.debug("Wake-word audio stream opened (rate=%d, frame_length=%d)", sample_rate, frame_length)
-
-            while self.is_listening:
-                try:
-                    pcm = self._stream.read(frame_length, exception_on_overflow=False)
-                    keyword_index = self.engine.process(pcm)
-
-                    if keyword_index >= 0:
-                        LOGGER.info("Wake word detected: %s", self.keyword)
-                        callback()
-                except Exception as exc:  # noqa: BLE001
-                    if self.is_listening:
-                        LOGGER.exception("Error in wake-word detection loop: %s", exc)
-                    break
-
-        except Exception as exc:  # noqa: BLE001
-            LOGGER.exception("Wake-word listener thread error: %s", exc)
+            self._service.stop()
+        except Exception as exc:
+            LOGGER.warning("Error stopping wake-word service: %s", exc)
         finally:
-            self.stop_listening()
-
-    def __del__(self) -> None:
-        """Cleanup on deletion."""
-        self.stop_listening()
-        if self.engine:
-            try:
-                self.engine.delete()
-            except Exception:
-                pass
+            self._service     = None
+            self.is_listening = False
+            LOGGER.info("BYOV wake-word listener stopped")
 
 
-# Global instance
+def _parse_device_env() -> int | None:
+    raw = os.getenv("WAKE_WORD_DEVICE", "").strip()
+    if not raw:
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        LOGGER.warning("WAKE_WORD_DEVICE='%s' is not an integer — using default", raw)
+        return None
+
+
+# ── Module-level singleton ────────────────────────────────────────────────────
+
 wakeword_engine = WakeWordEngine()
-

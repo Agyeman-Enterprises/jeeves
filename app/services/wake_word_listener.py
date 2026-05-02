@@ -1,294 +1,231 @@
 """
-Enhanced Wake-Word Listener
-Listens for "Hey Jarvis" or "Hey Jarv", then captures speech and processes it.
+BYOV Wake-Word Listener for Jeeves.
+
+Replaces the OpenWakeWord engine with on-device MFCC + DTW detection from
+app.services.wake_word_byov. The full voice capture -> STT -> LLM -> TTS
+pipeline is unchanged.
+
+Usage (standalone):
+    python -m app.services.wake_word_listener
+
+Training:
+    python -m app.services.wake_word_byov.train_cli --agent-id jeeves
 """
+
+from __future__ import annotations
 
 import io
 import logging
 import os
+import struct
+import subprocess
+import tempfile
 import time
 import wave
-from pathlib import Path
-from typing import Optional
 
-import pyaudio
 import requests
+
+from app.services.wake_word_byov import WakeWordService, WakeWordStore
 
 LOGGER = logging.getLogger(__name__)
 
-# Configuration
-BACKEND_URL = os.getenv("JARVIS_BACKEND_URL", "http://localhost:8000")
-WAKE_WORDS = ["hey jarvis", "hey jarv"]
-LISTEN_DURATION = 10  # seconds to listen after wake-word
-SILENCE_THRESHOLD = 500  # Adjust based on mic sensitivity
-SILENCE_DURATION = 2.0  # seconds of silence before stopping
+# ── Configuration ─────────────────────────────────────────────────────────────
+
+BACKEND_URL       = os.getenv("JARVIS_BACKEND_URL", "http://localhost:8000")
+AGENT_ID          = os.getenv("WAKE_WORD_AGENT_ID", "jeeves")
+LISTEN_DURATION   = 10
+SILENCE_THRESHOLD = 500
+SILENCE_DURATION  = 2.0
 
 
-class WakeWordListener:
-    """Enhanced wake-word listener with speech capture."""
-    
-    def __init__(self):
-        self.is_listening = False
-        self.mic: Optional[pyaudio.PyAudio] = None
-        self.stream: Optional[pyaudio.Stream] = None
-        self.oww_model = None
-        self._setup_openwakeword()
-    
-    def _setup_openwakeword(self):
-        """Initialize OpenWakeWord model."""
-        try:
-            from openwakeword.model import Model
-            self.oww_model = Model(inference_framework="onnx")
-            LOGGER.info(f"OpenWakeWord loaded. Available models: {list(self.oww_model.models.keys())}")
-        except ImportError:
-            LOGGER.error("openwakeword not installed. Install with: pip install openwakeword")
-            raise
-        except Exception as e:
-            LOGGER.error(f"Failed to load OpenWakeWord: {e}")
-            raise
-    
-    def _setup_audio(self):
-        """Initialize audio capture."""
-        try:
-            self.mic = pyaudio.PyAudio()
-            self.stream = self.mic.open(
-                rate=16000,
-                channels=1,
-                format=pyaudio.paInt16,
-                input=True,
-                frames_per_buffer=1280
-            )
-            LOGGER.info("Audio stream initialized (16kHz, mono, 16-bit)")
-        except Exception as e:
-            LOGGER.error(f"Failed to initialize audio: {e}")
-            raise
-    
-    def _detect_wake_word(self, audio_data: bytes) -> bool:
-        """Check if wake-word is detected in audio chunk."""
-        if not self.oww_model:
-            return False
-        
-        try:
-            prediction = self.oww_model.predict(audio_data)
-            for model_name in self.oww_model.models.keys():
-                if "jarvis" in model_name.lower() or "jarv" in model_name.lower():
-                    if prediction[model_name] >= 0.5:
-                        LOGGER.info(f"Wake-word detected! ({model_name}, confidence: {prediction[model_name]:.2f})")
-                        return True
-        except Exception as e:
-            LOGGER.debug(f"Wake-word detection error: {e}")
-        
-        return False
-    
-    def _capture_speech(self) -> Optional[bytes]:
-        """Capture speech after wake-word detection."""
-        if not self.stream:
-            return None
-        
-        LOGGER.info("Listening for speech...")
-        frames = []
-        silence_start = None
-        start_time = time.time()
-        
-        while time.time() - start_time < LISTEN_DURATION:
-            try:
-                chunk = self.stream.read(1280, exception_on_overflow=False)
-                frames.append(chunk)
-                
-                # Check for silence
-                import struct
-                audio_data = struct.unpack(f"{len(chunk)//2}h", chunk)
-                max_amplitude = max(abs(sample) for sample in audio_data)
-                
-                if max_amplitude < SILENCE_THRESHOLD:
+# ── Full voice pipeline ───────────────────────────────────────────────────────
+
+def _capture_speech() -> bytes | None:
+    """Capture post-wakeword speech via sounddevice, return WAV bytes."""
+    try:
+        import sounddevice as sd
+    except ImportError:
+        LOGGER.error("sounddevice not installed")
+        return None
+
+    RATE  = 16_000
+    CHUNK = 1_280
+    _raw_chunks: list[bytes] = []
+
+    def _callback(
+        indata:    bytes,
+        frames:    int,
+        time_info: object,
+        status:    sd.CallbackFlags,
+    ) -> None:
+        _raw_chunks.append(bytes(indata))
+
+    stream = sd.RawInputStream(
+        samplerate=RATE, channels=1, dtype="int16",
+        blocksize=CHUNK, callback=_callback
+    )
+
+    collected: list[bytes] = []
+    silence_start: float | None = None
+    deadline = time.time() + LISTEN_DURATION
+
+    LOGGER.info("Listening for speech (max %.0fs)...", LISTEN_DURATION)
+    with stream:
+        while time.time() < deadline:
+            time.sleep(0.04)
+            while _raw_chunks:
+                chunk = _raw_chunks.pop(0)
+                collected.append(chunk)
+                n_samples = len(chunk) // 2
+                samples   = struct.unpack(f"{n_samples}h", chunk)
+                peak      = max(abs(s) for s in samples)
+                if peak < SILENCE_THRESHOLD:
                     if silence_start is None:
                         silence_start = time.time()
                     elif time.time() - silence_start >= SILENCE_DURATION:
-                        LOGGER.info("Silence detected, stopping capture")
+                        LOGGER.info("Silence detected — stopping capture")
                         break
                 else:
                     silence_start = None
-                
-            except Exception as e:
-                LOGGER.error(f"Error capturing audio: {e}")
-                break
-        
-        if not frames:
-            return None
-        
-        # Convert to WAV format
-        wav_buffer = io.BytesIO()
-        with wave.open(wav_buffer, 'wb') as wav_file:
-            wav_file.setnchannels(1)
-            wav_file.setsampwidth(2)  # 16-bit
-            wav_file.setframerate(16000)
-            wav_file.writeframes(b''.join(frames))
-        
-        return wav_buffer.getvalue()
-    
-    def _process_speech(self, audio_data: bytes) -> Optional[str]:
-        """Send audio to backend for transcription and processing."""
-        try:
-            # Transcribe
-            files = {'file': ('audio.wav', audio_data, 'audio/wav')}
-            response = requests.post(
-                f"{BACKEND_URL}/api/voice/transcribe",
-                files=files,
-                timeout=30
-            )
-            response.raise_for_status()
-            transcription = response.json().get("text", "")
-            
-            if not transcription:
-                LOGGER.warning("No transcription returned")
-                return None
-            
-            LOGGER.info(f"Transcribed: {transcription}")
-            
-            # Send to query endpoint
-            query_response = requests.post(
-                f"{BACKEND_URL}/query",
-                json={"query": transcription},
-                timeout=60
-            )
-            query_response.raise_for_status()
-            result = query_response.json()
-            
-            reply_text = result.get("content", "")
-            if not reply_text:
-                reply_text = result.get("reply", "")
-            
-            LOGGER.info(f"Jarvis reply: {reply_text[:100]}...")
-            
-            # Get TTS audio
-            tts_response = requests.post(
-                f"{BACKEND_URL}/api/voice/speak",
-                json={"text": reply_text},
-                timeout=30
-            )
-            tts_response.raise_for_status()
-            
-            # Save audio to temp file and play
-            import tempfile
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp:
-                tmp.write(tts_response.content)
-                tmp_path = tmp.name
-            
-            # Play audio (platform-specific)
-            self._play_audio(tmp_path)
-            
-            # Cleanup
-            try:
-                os.unlink(tmp_path)
-            except:
-                pass
-            
-            return reply_text
-            
-        except Exception as e:
-            LOGGER.error(f"Error processing speech: {e}")
-            return None
-    
-    def _play_audio(self, audio_path: str):
-        """Play audio file (platform-specific)."""
-        try:
-            import platform
-            system = platform.system()
-            
-            if system == "Windows":
-                import winsound
-                winsound.PlaySound(audio_path, winsound.SND_FILENAME)
-            elif system == "Darwin":  # macOS
-                import subprocess
-                subprocess.run(["afplay", audio_path], check=True)
-            else:  # Linux
-                import subprocess
-                subprocess.run(["aplay", audio_path], check=True)
-        except Exception as e:
-            LOGGER.warning(f"Could not play audio: {e}")
-    
-    def start(self):
-        """Start listening for wake-words."""
-        if self.is_listening:
-            LOGGER.warning("Already listening")
+            else:
+                continue
+            break   # inner break propagated by else/continue/break pattern
+
+    if not collected:
+        return None
+
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(RATE)
+        wf.writeframes(b"".join(collected))
+    return buf.getvalue()
+
+
+def _process_speech(audio_data: bytes) -> None:
+    """Transcribe -> query JARVIS backend -> synthesise reply -> play."""
+    try:
+        files = {"file": ("audio.wav", audio_data, "audio/wav")}
+        resp  = requests.post(f"{BACKEND_URL}/api/voice/transcribe",
+                               files=files, timeout=30)
+        resp.raise_for_status()
+        text = resp.json().get("text", "")
+        if not text:
+            LOGGER.warning("No transcription returned")
             return
-        
-        self._setup_audio()
-        self.is_listening = True
-        
-        LOGGER.info("=" * 60)
-        LOGGER.info("Wake-Word Listener Started")
-        LOGGER.info(f"Listening for: {', '.join(WAKE_WORDS)}")
-        LOGGER.info("=" * 60)
-        
+
+        LOGGER.info("Transcribed: %s", text)
+
+        q_resp = requests.post(f"{BACKEND_URL}/query",
+                                json={"query": text}, timeout=60)
+        q_resp.raise_for_status()
+        reply = q_resp.json().get("content") or q_resp.json().get("reply", "")
+        LOGGER.info("Jeeves reply: %s...", reply[:80])
+
+        tts = requests.post(f"{BACKEND_URL}/api/voice/speak",
+                             json={"text": reply}, timeout=30)
+        tts.raise_for_status()
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(tts.content)
+            tmp_path = tmp.name
+
+        _play_audio(tmp_path)
+
         try:
-            while self.is_listening:
-                # Read audio chunk
-                audio_chunk = self.stream.read(1280, exception_on_overflow=False)
-                
-                # Check for wake-word
-                if self._detect_wake_word(audio_chunk):
-                    # Capture speech
-                    speech_audio = self._capture_speech()
-                    if speech_audio:
-                        # Process in a separate thread to avoid blocking
-                        import threading
-                        thread = threading.Thread(
-                            target=self._process_speech,
-                            args=(speech_audio,),
-                            daemon=True
-                        )
-                        thread.start()
-                    
-                    # Brief pause to avoid re-triggering
-                    time.sleep(1.0)
-                
-                time.sleep(0.01)
-                
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+
+    except Exception as exc:
+        LOGGER.error("Error processing speech: %s", exc)
+
+
+def _play_audio(path: str) -> None:
+    import platform
+    system = platform.system()
+    try:
+        if system == "Windows":
+            import winsound
+            winsound.PlaySound(path, winsound.SND_FILENAME)
+        elif system == "Darwin":
+            subprocess.run(["afplay", path], check=False)
+        else:
+            subprocess.run(["aplay", path], check=False)
+    except Exception as exc:
+        LOGGER.warning("Could not play audio: %s", exc)
+
+
+# ── WakeWordListener ──────────────────────────────────────────────────────────
+
+class WakeWordListener:
+    """
+    Wraps WakeWordService and adds the full voice-capture pipeline.
+    Detects wake word -> captures speech -> sends to JARVIS -> plays reply.
+    """
+
+    def __init__(self, agent_id: str = AGENT_ID) -> None:
+        self._agent_id = agent_id
+        self._svc: WakeWordService | None = None
+
+    def _on_wake_word(self) -> None:
+        LOGGER.info("*** WAKE WORD DETECTED ***")
+        import threading
+        threading.Thread(target=self._handle_wake, daemon=True).start()
+
+    def _handle_wake(self) -> None:
+        audio = _capture_speech()
+        if audio:
+            _process_speech(audio)
+
+    def start(self) -> None:
+        store = WakeWordStore(self._agent_id)
+        if not store.exists():
+            LOGGER.error(
+                "No wake-word template for agent_id='%s'. "
+                "Train first: python -m app.services.wake_word_byov.train_cli "
+                "--agent-id %s",
+                self._agent_id, self._agent_id,
+            )
+            return
+
+        self._svc = WakeWordService(
+            callback=self._on_wake_word,
+            agent_id=self._agent_id,
+        )
+        self._svc.start()
+
+        LOGGER.info("=" * 60)
+        LOGGER.info("  Jeeves BYOV Wake-Word Listener started")
+        LOGGER.info("  Agent ID : %s", self._agent_id)
+        LOGGER.info("  Say your trained phrase to activate Jeeves")
+        LOGGER.info("=" * 60)
+
+        try:
+            while self._svc.is_running:
+                time.sleep(1)
         except KeyboardInterrupt:
             LOGGER.info("Shutting down...")
-        except Exception as e:
-            LOGGER.exception(f"Error in wake-word loop: {e}")
         finally:
             self.stop()
-    
-    def stop(self):
-        """Stop listening."""
-        self.is_listening = False
-        
-        if self.stream:
-            try:
-                self.stream.stop_stream()
-                self.stream.close()
-            except:
-                pass
-            self.stream = None
-        
-        if self.mic:
-            try:
-                self.mic.terminate()
-            except:
-                pass
-            self.mic = None
-        
+
+    def stop(self) -> None:
+        if self._svc is not None:
+            self._svc.stop()
+            self._svc = None
         LOGGER.info("Wake-word listener stopped")
 
 
-def main():
-    """Main entry point."""
+# ── Entry point ───────────────────────────────────────────────────────────────
+
+def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-    
-    listener = WakeWordListener()
-    try:
-        listener.start()
-    except Exception as e:
-        LOGGER.error(f"Failed to start listener: {e}")
-        raise
+    WakeWordListener().start()
 
 
 if __name__ == "__main__":
     main()
-
